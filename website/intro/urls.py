@@ -17,12 +17,12 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
-from intro.views import IndexView
 from django.contrib.auth import views as auth_views
 from django.conf import settings
+from django.views.generic import RedirectView
 
 urlpatterns = [
-    path("", IndexView.as_view(), name="index"),
+    path("", RedirectView.as_view(url="accreditatie/events/")),
     path("admin/", admin.site.urls),
     path("accreditatie/", include("accreditatie.urls")),
     path("accounts/", include("django.contrib.auth.urls")),

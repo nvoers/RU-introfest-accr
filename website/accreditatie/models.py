@@ -48,12 +48,17 @@ class AccessLevel(models.Model):
 class AccessEntry(models.Model):
     name = models.CharField(max_length=200)
     event = models.ForeignKey(
-        Event, on_delete=models.CASCADE, default=None, null=True, blank=True
+        Event,
+        on_delete=models.CASCADE,
+        default=None,
+        null=True,
+        blank=True,
+        related_name="access_entries",
     )
 
-    ARTIST = "artist"
-    CREW = "crew"
-    GUEST = "guest"
+    ARTIST = "Artist"
+    CREW = "Crew"
+    GUEST = "Guest"
     access_types = {
         ARTIST: "Artist",
         CREW: "Crew",
@@ -70,9 +75,9 @@ class AccessEntry(models.Model):
         AccessLevel, on_delete=models.CASCADE, default=None, null=True, blank=True
     )
 
-    ARRIVED = "arrived"
-    NOT_ARRIVED = "not_arrived"
-    CANCELLED = "cancelled"
+    ARRIVED = "Arrived"
+    NOT_ARRIVED = "Not Arrived"
+    CANCELLED = "Cancelled"
     status_choices = {
         ARRIVED: "Arrived",
         NOT_ARRIVED: "Not Arrived",
