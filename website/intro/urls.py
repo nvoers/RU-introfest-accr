@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import include, path
 from intro.views import IndexView
 from django.contrib.auth import views as auth_views
+from django.conf import settings
 
 urlpatterns = [
     path("", IndexView.as_view(), name="index"),
@@ -26,3 +27,9 @@ urlpatterns = [
     path("accreditatie/", include("accreditatie.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
 ]
+
+if settings.DEBUG:
+    # Include django_browser_reload URLs only in DEBUG mode
+    urlpatterns += [
+        path("__reload__/", include("django_browser_reload.urls")),
+    ]

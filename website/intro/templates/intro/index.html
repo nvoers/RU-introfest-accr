@@ -1,3 +1,5 @@
+{% extends "base.html" %}
+
 <h1>succes pt2</h1>
 {% block content %} {% if user.is_authenticated %} Hi {{ user.username }}!
 <form action="{% url 'logout' %}" method="post">
