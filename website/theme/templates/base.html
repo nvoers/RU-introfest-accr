@@ -1,6 +1,6 @@
 {% load static tailwind_tags %}
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full bg-white dark:bg-gray-900">
   <head>
     <title>Django Tailwind</title>
     <meta charset="UTF-8" />
@@ -9,12 +9,7 @@
     {% tailwind_css %}
   </head>
 
-  <body class="bg-gray-50 text-black font-serif leading-normal tracking-normal">
-    <div class="container mx-auto">
-      <section class="flex items-center justify-center h-screen">
-        <h1 class="text-5xl">Django + Tailwind = ❤️</h1>
-      </section>
-    </div>
+  <body class="bg-gray-50 text-black h-full">
     {% block content %}{% endblock %}
   </body>
 </html>
