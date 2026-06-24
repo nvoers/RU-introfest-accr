@@ -3,5 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
 
-def index(request):
-    return render(request, "intro/index.html")
+class IndexView(TemplateView):
+    """Index view."""
+
+    template_name = "intro/index.html"
