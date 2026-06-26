@@ -19,7 +19,12 @@ class Event(models.Model):
 class Entrance(models.Model):
     name = models.CharField(max_length=200, unique=True)
     event = models.ForeignKey(
-        Event, on_delete=models.CASCADE, default=None, null=True, blank=True
+        Event,
+        on_delete=models.CASCADE,
+        default=None,
+        null=True,
+        blank=True,
+        related_name="entrances",
     )
 
     def __str__(self):

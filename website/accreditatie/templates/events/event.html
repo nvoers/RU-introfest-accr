@@ -123,13 +123,12 @@
         Accreditaties
       </h2>
 
-      <form action="#">
-        <input
-          type="submit"
-          value="Nieuwe accreditatie"
-          class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-        />
-      </form>
+      <a
+        href="/accreditatie/event/{{ event.id }}/access_entries/new"
+        class="btn btn-medium rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+      >
+        Nieuwe Accreditatie
+      </a>
     </div>
     {% if access_entries.count > 0 %}
     <div class="overflow-x-auto rounded border border-gray-300 shadow-sm">
