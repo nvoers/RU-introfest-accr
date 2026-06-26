@@ -32,7 +32,12 @@ class Entrance(models.Model):
 class AccessLevel(models.Model):
     name = models.CharField(max_length=200, unique=True)
     event = models.ForeignKey(
-        Event, on_delete=models.CASCADE, default=None, null=True, blank=True
+        Event,
+        on_delete=models.CASCADE,
+        default=None,
+        null=True,
+        blank=True,
+        related_name="access_levels",
     )
     color = models.CharField(
         max_length=7, default="#000000", help_text="Hex color code"

@@ -6,6 +6,6 @@ from . import views
 urlpatterns = [
     path("", RedirectView.as_view(url="accreditatie/events/")),
     path("events/", views.EventListView.as_view(), name="event_list"),
-    path("event/<int:pk>/", views.event, name="event_detail"),
+    path("event/<int:pk>/", views.EventDetailView.as_view(), name="event_detail"),
     path("events/new", views.NewEventView.as_view(), name="new_event"),
 ]

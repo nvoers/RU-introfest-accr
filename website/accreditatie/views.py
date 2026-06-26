@@ -1,15 +1,52 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Event, Entrance, AccessLevel, AccessEntry
-from django.views.generic import ListView, TemplateView
-from .forms import NewEventForm
+from django.views.generic import ListView, TemplateView, DetailView
+from .forms import NewEventForm, NewAccessLevelForm
 
 
-def event(request, pk):
-    event = get_object_or_404(Event, pk=pk)
-    access_entries = event.access_entries.all()
-    return render(
-        request, "events/event.html", {"event": event, "access_entries": access_entries}
-    )
+class EventDetailView(TemplateView):
+    template_name = "events/event.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        event = get_object_or_404(Event, pk=self.kwargs["pk"])
+        access_entries = event.access_entries.all()
+        access_levels = event.access_levels.all()
+        form = NewAccessLevelForm()
+
+        context.update(
+            {
+                "event": event,
+                "access_entries": access_entries,
+                "access_levels": access_levels,
+                "form": form,
+            }
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        event = get_object_or_404(Event, pk=self.kwargs["pk"])
+        form = NewAccessLevelForm(request.POST)
+        if form.is_valid():
+            AccessLevel.objects.create(
+                name=form.cleaned_data["name"],
+                color=form.cleaned_data["color"],
+                event=event,
+            )
+            return redirect("event_detail", pk=event.pk)
+
+        access_entries = event.access_entries.all()
+        access_levels = event.access_levels.all()
+        return render(
+            request,
+            self.template_name,
+            {
+                "event": event,
+                "access_entries": access_entries,
+                "access_levels": access_levels,
+                "form": form,
+            },
+        )
 
 
 class EventListView(ListView):

@@ -13,3 +13,12 @@ class NewEventForm(forms.Form):
         label="Event End Time", widget=forms.TimeInput(format="%H:%M")
     )
     location = forms.CharField(label="Event Location", max_length=200)
+
+
+class NewAccessLevelForm(forms.Form):
+    name = forms.CharField(label="Access Level Name", max_length=100)
+    color = forms.CharField(
+        label="Access Level Color",
+        max_length=7,
+        widget=forms.TextInput(attrs={"type": "color"}),
+    )

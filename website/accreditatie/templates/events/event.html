@@ -1,76 +1,189 @@
 {% extends "base.html" %} {% block content %}
-<div class="my-6">
-  <h1 class="text-3xl text-pretty text-black-900 font-extrabold">
-    {{ event.name }}
-  </h1>
-  <h1 class="text-lg text-pretty text-black-900">
-    {{ event.date|date:"d/m/Y" }}
-    {{event.start_time|date:"G:i"}}-{{event.end_time|date:"G:i" }}
-  </h1>
-  <h1 class="text-lg text-pretty text-black-900">{{ event.location }}</h1>
+<div class="flex my-6 justify-between">
+  <div>
+    <h1 class="text-3xl text-pretty text-black-900 font-extrabold">
+      {{ event.name }}
+    </h1>
+    <h1 class="text-lg text-pretty text-black-900">
+      {{ event.date|date:"d/m/Y" }}
+      {{event.start_time|date:"G:i"}}-{{event.end_time|date:"G:i" }}
+    </h1>
+    <h1 class="text-lg text-pretty text-black-900">{{ event.location }}</h1>
+  </div>
 </div>
 
 <div>
-  <div class="flex justify-between mb-4">
-    <h2 class="text-2xl text-pretty text-black-900 font-extrabold">
-      Accreditaties
-    </h2>
-    <a
-      href="#"
-      class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+  <div class="mb-4">
+    <div class="flex justify-between">
+      <h2 class="text-2xl text-pretty text-black-900 font-extrabold">
+        Access Levels
+      </h2>
+      {% comment %}
+      <button
+        command="show-modal"
+        commandfor="newAccessLevelDialog"
+        class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+      >
+        Nieuw Access Level
+      </button>
+      {% endcomment %}
+      <button
+        class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+        onclick="newAccessLevelDialog.showModal()"
+      >
+        Nieuw Access Level
+      </button>
+    </div>
+    <dialog
+      id="newAccessLevelDialog"
+      class="modal"
     >
-      Nieuwe accreditatie
-    </a>
+      <div class="modal-box">
+        <form method="dialog">
+          <button
+            class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+          >
+            ✕
+          </button>
+        </form>
+        <h3 class="text-lg font-bold">Add Access Level</h3>
+        <form
+          action="/accreditatie/event/{{ event.id }}/"
+          method="post"
+          class="space-y-6"
+        >
+          {% csrf_token %}
+          <div>
+            <div class="flex items-center justify-between">
+              <label
+                for="{{ form.name.id_for_label }}"
+                class="block text-sm/6 font-medium text-gray-900"
+                >{{ form.name.label }}</label
+              >
+            </div>
+            <div class="mt-2">
+              <input
+                id="{{ form.name.id_for_label }}"
+                type="text"
+                name="{{ form.name.html_name }}"
+                required
+                class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+                value="{{ form.name.value|default:'' }}"
+              />
+            </div>
+            <div>
+              <div class="flex items-center justify-between">
+                <label
+                  for="{{ form.color.id_for_label }}"
+                  class="block text-sm/6 font-medium text-gray-900"
+                  >{{ form.color.label }}</label
+                >
+              </div>
+              <div class="mt-2">
+                <input
+                  id="{{ form.color.id_for_label }}"
+                  type="color"
+                  name="{{ form.color.html_name }}"
+                  required
+                  class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+                  value="{{ form.color.value|default:'#000000' }}"
+                />
+              </div>
+            </div>
+          </div>
+          <input
+            type="submit"
+            value="Add"
+            class="block rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 mt-2"
+          />
+        </form>
+      </div>
+    </dialog>
   </div>
-  {% if access_entries.count > 0 %}
-  <div class="overflow-x-auto rounded border border-gray-300 shadow-sm">
-    <table class="min-w-full divide-y-2 divide-gray-200">
-      <thead class="ltr:text-left rtl:text-right">
-        <tr class="*:font-medium *:text-gray-900">
-          <th class="px-3 py-2 whitespace-nowrap">Name</th>
-          <th class="px-3 py-2 whitespace-nowrap">Type</th>
-          <th class="px-3 py-2 whitespace-nowrap">Tickets</th>
-          <th class="px-3 py-2 whitespace-nowrap">Access Level</th>
-          <th class="px-3 py-2 whitespace-nowrap">Status</th>
-          <th class="px-3 py-2 whitespace-nowrap"></th>
-        </tr>
-      </thead>
-
-      <tbody class="divide-y divide-gray-200">
-        {% for access_entry in access_entries %}
-        <tr class="*:text-gray-900 *:first:font-medium">
-          <td class="px-3 py-2 whitespace-nowrap">{{ access_entry.name }}</td>
-          <td class="px-3 py-2 whitespace-nowrap">
-            {{ access_entry.access_type}}
-          </td>
-          <td class="px-3 py-2 whitespace-nowrap">
-            {{ access_entry.number_of_tickets }}
-          </td>
-          <td class="px-3 py-2 whitespace-nowrap">
-            <button
-              class="rounded-full px-3 py-1 text-sm font-medium text-gray-600"
-              style="background-color: {{ access_entry.access_level.color }};"
-            >
-              {{ access_entry.access_level.name }}
-            </button>
-          </td>
-          <td class="px-3 py-2 whitespace-nowrap">{{ access_entry.status }}</td>
-          <td class="px-3 py-2 whitespace-nowrap">
-            <a
-              href="#"
-              class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-            >
-              Bekijk
-            </a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  {% if access_levels.count > 0 %}
+  <div class="mb-6">
+    {% for access_level in access_levels %}
+    <button
+      class="badge badge-lg"
+      style="background-color: {{ access_level.color }};"
+    >
+      {{ access_level.name }}
+    </button>
+    {% endfor %}
   </div>
   {% else %}
   <div class="text-lg text-pretty text-black-900">
-    Geen accreditaties beschikbaar
+    Geen access levels beschikbaar
   </div>
-  {% endif %} {% endblock %}
+  {% endif %}
+
+  <div>
+    <div class="flex justify-between mb-4">
+      <h2 class="text-2xl text-pretty text-black-900 font-extrabold">
+        Accreditaties
+      </h2>
+
+      <form action="#">
+        <input
+          type="submit"
+          value="Nieuwe accreditatie"
+          class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+        />
+      </form>
+    </div>
+    {% if access_entries.count > 0 %}
+    <div class="overflow-x-auto rounded border border-gray-300 shadow-sm">
+      <table class="min-w-full divide-y-2 divide-gray-200">
+        <thead class="ltr:text-left rtl:text-right">
+          <tr class="*:font-medium *:text-gray-900">
+            <th class="px-3 py-2 whitespace-nowrap">Name</th>
+            <th class="px-3 py-2 whitespace-nowrap">Type</th>
+            <th class="px-3 py-2 whitespace-nowrap">Tickets</th>
+            <th class="px-3 py-2 whitespace-nowrap">Access Level</th>
+            <th class="px-3 py-2 whitespace-nowrap">Status</th>
+            <th class="px-3 py-2 whitespace-nowrap"></th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-200">
+          {% for access_entry in access_entries %}
+          <tr class="*:text-gray-900 *:first:font-medium">
+            <td class="px-3 py-2 whitespace-nowrap">{{ access_entry.name }}</td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              {{ access_entry.access_type}}
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              {{ access_entry.number_of_tickets }}
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              <div
+                class="badge badge-md"
+                style="background-color: {{ access_entry.access_level.color }};"
+              >
+                {{ access_entry.access_level.name }}
+              </div>
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              {{ access_entry.status }}
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              <a
+                href="#"
+                class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Bekijk
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-lg text-pretty text-black-900">
+      Geen accreditaties beschikbaar
+    </div>
+    {% endif %}
+  </div>
 </div>
+{% endblock %}
