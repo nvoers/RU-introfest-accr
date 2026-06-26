@@ -1,17 +1,45 @@
 {% extends "base.html" %} {% block content %}
-<div class="flex my-6 justify-between items-center">
+<div class="mt-4">
+  <a
+    href="{% url 'event_detail' pk=entry.event.pk %}"
+    class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+  >
+    Back
+  </a>
+</div>
+<div class="flex flex-col mb-6 mt-4 justify-between">
   <div>
     <h1 class="text-3xl text-pretty text-black-900 font-extrabold">
       {{ entry.name }}
     </h1>
     <h1 class="text-lg text-pretty text-black-900">{{ entry.event.name }}</h1>
   </div>
-  <button
-    class="btn btn-success"
-    onclick="editEntryDialog.showModal()"
-  >
-    Edit
-  </button>
+  <div class="flex gap-3">
+    <form
+      action="{% url 'access_entry_detail' entry.id %}"
+      method="post"
+    >
+      {% csrf_token %}
+      <input
+        type="hidden"
+        name="toggle_status"
+        value="1"
+      />
+      <button
+        type="submit"
+        class="btn {% if entry.status == entry.ARRIVED %}btn-warning{% else %}btn-success{% endif %}"
+      >
+        {% if entry.status == entry.ARRIVED %} Mark as not arrived {% else %}
+        Mark as arrived {% endif %}
+      </button>
+    </form>
+    <button
+      class="btn btn-success"
+      onclick="editEntryDialog.showModal()"
+    >
+      Edit
+    </button>
+  </div>
   <dialog
     id="editEntryDialog"
     class="modal"

@@ -100,6 +100,15 @@ class AccessEntryDetailView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         entry = get_object_or_404(AccessEntry, pk=self.kwargs["pk"])
+
+        if "toggle_status" in request.POST:
+            if entry.status == AccessEntry.ARRIVED:
+                entry.status = AccessEntry.NOT_ARRIVED
+            else:
+                entry.status = AccessEntry.ARRIVED
+            entry.save(update_fields=["status", "updated_at"])
+            return redirect("access_entry_detail", pk=entry.pk)
+
         form = EditAccessEntryForm(request.POST, instance=entry, event=entry.event)
         if form.is_valid():
             entry.name = form.cleaned_data["name"]
