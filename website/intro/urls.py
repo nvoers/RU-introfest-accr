@@ -26,6 +26,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accreditatie/", include("accreditatie.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("hospitality/", include("hospitality.urls")),
 ]
 
 if settings.DEBUG:

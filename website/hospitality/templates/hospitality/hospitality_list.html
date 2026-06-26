@@ -1,0 +1,135 @@
+{% extends "base.html" %} {% block content%}
+
+<div class="my-6">
+  <div class="mb-4">
+    <div class="flex justify-between">
+      <h2 class="text-2xl text-pretty text-black-900 font-extrabold">
+        Hospitality types
+      </h2>
+      <button
+        class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+        onclick="newHospitalityTypeDialog.showModal()"
+      >
+        Nieuw Hospitality type
+      </button>
+    </div>
+    <dialog
+      id="newHospitalityTypeDialog"
+      class="modal"
+    >
+      <div class="modal-box">
+        <form method="dialog">
+          <button
+            class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+          >
+            ✕
+          </button>
+        </form>
+        <h3 class="text-lg font-bold">Add Hospitality Type</h3>
+        <form
+          action="{% url 'hospitality_list' %}"
+          method="post"
+          class="space-y-6"
+        >
+          {% csrf_token %}
+          <div>
+            <div class="flex items-center justify-between">
+              {{ form.name.errors }}
+              <label
+                for="{{ form.name.id_for_label }}"
+                class="block text-sm/6 font-medium text-gray-900"
+                >{{ form.name.label }}</label
+              >
+            </div>
+            <div class="mt-2">
+              <input
+                id="{{ form.name.id_for_label }}"
+                type="text"
+                name="{{ form.name.html_name }}"
+                required
+                class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+                value="{{ form.name.value|default:'' }}"
+              />
+            </div>
+            <div class="mt-2">
+              <div class="flex items-center justify-between">
+                {{ form.type.errors }}
+                <label
+                  for="{{ form.type.id_for_label }}"
+                  class="block text-sm/6 font-medium text-gray-900"
+                  >{{ form.type.label }}</label
+                >
+              </div>
+              <div class="mt-2">
+                <select
+                  id="{{ form.type.id_for_label }}"
+                  name="{{ form.type.html_name }}"
+                  required
+                  class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+                >
+                  {% for choice in form.type.field.choices %}
+                  <option
+                    value="{{ choice.0 }}"
+                    {%
+                    if
+                    form.type.value=""
+                    ="choice.0"
+                    %}selected{%
+                    endif
+                    %}
+                  >
+                    {{ choice.1 }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between">
+              {{ form.value.errors }}
+              <label
+                for="{{ form.value.id_for_label }}"
+                class="block text-sm/6 font-medium text-gray-900"
+                >{{ form.value.label }}</label
+              >
+            </div>
+            <div class="mt-2">
+              <input
+                id="{{ form.value.id_for_label }}"
+                type="number"
+                step="0.01"
+                min="0"
+                name="{{ form.value.html_name }}"
+                class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+                value="{{ form.value.value|default:'' }}"
+              />
+            </div>
+          </div>
+          <input
+            type="submit"
+            value="Add"
+            class="block rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 mt-2"
+          />
+        </form>
+      </div>
+    </dialog>
+  </div>
+  {% if hospitality_types.count > 0 %}
+  <div class="mb-6">
+    {% for hospitality_type in hospitality_types %}
+    <button
+      class="badge badge-lg"
+      style="background-color: {{ hospitality_type.color }};"
+    >
+      {{ hospitality_type.name }}
+    </button>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-lg text-pretty text-black-900">
+    Geen hospitality types beschikbaar
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
