@@ -1,0 +1,118 @@
+{% extends "base.html"%} {% block content %}
+<div class="my-6">
+  <h2 class="text-2xl text-pretty text-black-900 font-extrabold pb-2">
+    Nieuw event
+  </h2>
+  <form
+    action="/accreditatie/events/new"
+    method="post"
+    class="space-y-6"
+  >
+    {% csrf_token %}
+    <div>
+      <div class="flex items-center justify-between">
+        <label
+          for="{{ form.name.id_for_label }}"
+          class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
+          >{{ form.name.label }}</label
+        >
+      </div>
+      <div class="mt-2">
+        <input
+          id="{{ form.name.id_for_label }}"
+          type="text"
+          name="{{ form.name.html_name }}"
+          required
+          class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+          value="{{ form.name.value|default:'' }}"
+        />
+      </div>
+    </div>
+    <div>
+      <div class="flex items-center justify-between">
+        <label
+          for="{{ form.date.id_for_label }}"
+          class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
+          >{{ form.date.label }}</label
+        >
+      </div>
+      <div class="mt-2">
+        <input
+          id="{{ form.date.id_for_label }}"
+          type="date"
+          name="{{ form.date.html_name }}"
+          required
+          class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+          value="{{ form.date.value|default:'' }}"
+        />
+      </div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between">
+        <label
+          for="{{ form.start_time.id_for_label }}"
+          class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
+          >{{ form.start_time.label }}</label
+        >
+      </div>
+      <div class="mt-2">
+        <input
+          id="{{ form.start_time.id_for_label }}"
+          type="time"
+          name="{{ form.start_time.html_name }}"
+          required
+          class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+          value="{{ form.start_time.value|default:'' }}"
+        />
+      </div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between">
+        <label
+          for="{{ form.end_time.id_for_label }}"
+          class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
+          >{{ form.end_time.label }}</label
+        >
+      </div>
+      <div class="mt-2">
+        <input
+          id="{{ form.end_time.id_for_label }}"
+          type="time"
+          name="{{ form.end_time.html_name }}"
+          required
+          class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+          value="{{ form.end_time.value|default:'' }}"
+        />
+      </div>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between">
+        <label
+          for="{{ form.location.id_for_label }}"
+          class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
+          >{{ form.location.label }}</label
+        >
+      </div>
+      <div class="mt-2">
+        <input
+          id="{{ form.location.id_for_label }}"
+          type="text"
+          name="{{ form.location.html_name }}"
+          required
+          class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+          value="{{ form.location.value|default:'' }}"
+        />
+      </div>
+    </div>
+
+    <input
+      type="submit"
+      value="Submit"
+      class="block rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 mt-2"
+    />
+  </form>
+</div>
+{% endblock %}
