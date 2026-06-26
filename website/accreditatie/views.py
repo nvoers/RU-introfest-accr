@@ -1,7 +1,12 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Event, Entrance, AccessLevel, AccessEntry
 from django.views.generic import ListView, TemplateView, DetailView
-from .forms import NewEventForm, NewAccessLevelForm, NewAccessEntryForm
+from .forms import (
+    NewEventForm,
+    NewAccessLevelForm,
+    NewAccessEntryForm,
+    EditAccessEntryForm,
+)
 
 
 class EventDetailView(TemplateView):
@@ -77,10 +82,39 @@ class NewEventView(TemplateView):
         return render(request, self.template_name, {"form": form})
 
 
-class AccessEntryDetailView(DetailView):
-    model = AccessEntry
-    template_name = "accreditatie/access_entry_detail.html"
-    context_object_name = "access_entry"
+class AccessEntryDetailView(TemplateView):
+    template_name = "accreditatie/access_entry.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        entry = get_object_or_404(AccessEntry, pk=self.kwargs["pk"])
+        form = EditAccessEntryForm(instance=entry, event=entry.event)
+
+        context.update(
+            {
+                "entry": entry,
+                "form": form,
+            }
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        entry = get_object_or_404(AccessEntry, pk=self.kwargs["pk"])
+        form = EditAccessEntryForm(request.POST, instance=entry, event=entry.event)
+        if form.is_valid():
+            entry.name = form.cleaned_data["name"]
+            entry.event = form.cleaned_data["event"]
+            entry.access_type = form.cleaned_data["type"]
+            entry.number_of_tickets = form.cleaned_data["number_of_tickets"]
+            entry.entrance = form.cleaned_data["entrance"]
+            entry.access_level = form.cleaned_data["access_level"]
+            entry.full_clean()
+            entry.save()
+            return redirect("access_entry_detail", pk=entry.pk)
+
+        context = self.get_context_data(**kwargs)
+        context["form"] = form
+        return render(request, self.template_name, context)
 
 
 class NewAccessEntryView(TemplateView):

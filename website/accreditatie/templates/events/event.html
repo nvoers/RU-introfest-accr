@@ -18,15 +18,6 @@
       <h2 class="text-2xl text-pretty text-black-900 font-extrabold">
         Access Levels
       </h2>
-      {% comment %}
-      <button
-        command="show-modal"
-        commandfor="newAccessLevelDialog"
-        class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-      >
-        Nieuw Access Level
-      </button>
-      {% endcomment %}
       <button
         class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
         onclick="newAccessLevelDialog.showModal()"
@@ -167,7 +158,7 @@
             </td>
             <td class="px-3 py-2 whitespace-nowrap">
               <a
-                href="#"
+                href="/accreditatie/access_entry/{{ access_entry.id }}"
                 class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
                 Bekijk
