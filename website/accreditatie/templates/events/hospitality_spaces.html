@@ -1,0 +1,74 @@
+<div class="mb-4">
+  <div class="flex justify-between">
+    <h2 class="text-2xl text-pretty text-black-900 font-extrabold">Spaces</h2>
+    <button
+      class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+      onclick="newSpaceDialog.showModal()"
+    >
+      Nieuwe Space
+    </button>
+  </div>
+  <dialog
+    id="newSpaceDialog"
+    class="modal"
+  >
+    <div class="modal-box">
+      <form method="dialog">
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+          ✕
+        </button>
+      </form>
+      <h3 class="text-lg font-bold">Add Space</h3>
+      <form
+        action="/accreditatie/event/{{ event.id }}/"
+        method="post"
+        class="space-y-6"
+      >
+        {% csrf_token %} {{ spaceForm.event }}
+        <div>
+          <div class="flex items-center justify-between">
+            <label
+              for="{{ spaceForm.name.id_for_label }}"
+              class="block text-sm/6 font-medium text-gray-900"
+              >{{ spaceForm.name.label }}</label
+            >
+          </div>
+          <div class="mt-2">
+            <input
+              id="{{ spaceForm.name.id_for_label }}"
+              type="text"
+              name="{{ spaceForm.name.html_name }}"
+              required
+              class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+              value="{{ spaceForm.name.value|default:'' }}"
+            />
+          </div>
+        </div>
+        <button
+          type="submit"
+          name="submitted_form"
+          value="space"
+          class="block rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 mt-2"
+        >
+          Add
+        </button>
+      </form>
+    </div>
+  </dialog>
+</div>
+{% if spaces.count > 0 %}
+<div class="mb-6">
+  {% for space in spaces %}
+  <button
+    class="badge badge-lg bg-red-600 text-white"
+    style="background-color: {{ space.color }};"
+  >
+    {{ space.name }}
+  </button>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-lg text-pretty text-black-900 mb-6">
+  Geen spaces beschikbaar
+</div>
+{% endif %}

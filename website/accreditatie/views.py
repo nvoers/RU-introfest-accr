@@ -1,4 +1,6 @@
 from django.shortcuts import get_object_or_404, render, redirect
+
+from hospitality.models import Space
 from .models import Event, Entrance, AccessLevel, AccessEntry
 from django.views.generic import ListView, TemplateView, DetailView
 from .forms import (
@@ -6,51 +8,87 @@ from .forms import (
     NewAccessLevelForm,
     NewAccessEntryForm,
     EditAccessEntryForm,
+    NewSpaceForm,
 )
 
 
 class EventDetailView(TemplateView):
     template_name = "events/event.html"
 
+    def get_event_context(self, event, accessForm=None, spaceForm=None):
+        return {
+            "event": event,
+            "access_entries": event.access_entries.all(),
+            "access_levels": event.access_levels.all(),
+            "spaces": event.spaces.all(),
+            "accessForm": accessForm or NewAccessLevelForm(),
+            "spaceForm": spaceForm or NewSpaceForm(event=event),
+        }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         event = get_object_or_404(Event, pk=self.kwargs["pk"])
-        access_entries = event.access_entries.all()
-        access_levels = event.access_levels.all()
-        form = NewAccessLevelForm()
-
-        context.update(
-            {
-                "event": event,
-                "access_entries": access_entries,
-                "access_levels": access_levels,
-                "form": form,
-            }
-        )
+        context.update(self.get_event_context(event))
         return context
 
     def post(self, request, *args, **kwargs):
         event = get_object_or_404(Event, pk=self.kwargs["pk"])
-        form = NewAccessLevelForm(request.POST)
-        if form.is_valid():
-            AccessLevel.objects.create(
-                name=form.cleaned_data["name"],
-                color=form.cleaned_data["color"],
-                event=event,
-            )
-            return redirect("event_detail", pk=event.pk)
+        submitted_form = request.POST.get("submitted_form")
 
-        access_entries = event.access_entries.all()
-        access_levels = event.access_levels.all()
+        if submitted_form == "access_level":
+            accessForm = NewAccessLevelForm(request.POST)
+            spaceForm = NewSpaceForm(event=event)
+
+            if accessForm.is_valid():
+                AccessLevel.objects.create(
+                    name=accessForm.cleaned_data["name"],
+                    color=accessForm.cleaned_data["color"],
+                    event=event,
+                )
+                return redirect("event_detail", pk=event.pk)
+
+            return render(
+                request,
+                self.template_name,
+                self.get_event_context(
+                    event, accessForm=accessForm, spaceForm=spaceForm
+                ),
+            )
+
+        if submitted_form == "space":
+            accessForm = NewAccessLevelForm()
+            spaceForm = NewSpaceForm(request.POST, event=event)
+
+            if spaceForm.is_valid():
+                Space.objects.create(name=spaceForm.cleaned_data["name"], event=event)
+                return redirect("event_detail", pk=event.pk)
+
+            return render(
+                request,
+                self.template_name,
+                self.get_event_context(
+                    event, accessForm=accessForm, spaceForm=spaceForm
+                ),
+            )
+
+        accessForm = NewAccessLevelForm(request.POST)
+        spaceForm = NewSpaceForm(request.POST, event=event)
+        # if accessForm.is_valid():
+        #     AccessLevel.objects.create(
+        #         name=accessForm.cleaned_data["name"],
+        #         color=accessForm.cleaned_data["color"],
+        #         event=event,
+        #     )
+        #     return redirect("event_detail", pk=event.pk)
+
+        # if spaceForm.is_valid():
+        #     Space.objects.create(name=spaceForm.cleaned_data["name"], event=event)
+        #     return redirect("event_detail", pk=event.pk)
+
         return render(
             request,
             self.template_name,
-            {
-                "event": event,
-                "access_entries": access_entries,
-                "access_levels": access_levels,
-                "form": form,
-            },
+            self.get_event_context(event, accessForm=accessForm, spaceForm=spaceForm),
         )
 
 

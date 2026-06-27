@@ -69,6 +69,7 @@ class Space(models.Model):
         default=None,
         null=True,
         blank=True,
+        related_name="spaces",
     )
 
     def __str__(self):

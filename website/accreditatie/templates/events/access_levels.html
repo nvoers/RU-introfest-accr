@@ -1,0 +1,95 @@
+<div class="mb-4">
+  <div class="flex justify-between">
+    <h2 class="text-2xl text-pretty text-black-900 font-extrabold">
+      Access Levels
+    </h2>
+    <button
+      class="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+      onclick="newAccessLevelDialog.showModal()"
+    >
+      Nieuw Access Level
+    </button>
+  </div>
+  <dialog
+    id="newAccessLevelDialog"
+    class="modal"
+  >
+    <div class="modal-box">
+      <form method="dialog">
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+          ✕
+        </button>
+      </form>
+      <h3 class="text-lg font-bold">Add Access Level</h3>
+      <form
+        action="/accreditatie/event/{{ event.id }}/"
+        method="post"
+        class="space-y-6"
+      >
+        {% csrf_token %}
+        <div>
+          <div class="flex items-center justify-between">
+            <label
+              for="{{ accessForm.name.id_for_label }}"
+              class="block text-sm/6 font-medium text-gray-900"
+              >{{ accessForm.name.label }}</label
+            >
+          </div>
+          <div class="mt-2">
+            <input
+              id="{{ accessForm.name.id_for_label }}"
+              type="text"
+              name="{{ accessForm.name.html_name }}"
+              required
+              class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+              value="{{ accessForm.name.value|default:'' }}"
+            />
+          </div>
+          <div>
+            <div class="flex items-center justify-between">
+              <label
+                for="{{ accessForm.color.id_for_label }}"
+                class="block text-sm/6 font-medium text-gray-900"
+                >{{ accessForm.color.label }}</label
+              >
+            </div>
+            <div class="mt-2">
+              <input
+                id="{{ accessForm.color.id_for_label }}"
+                type="color"
+                name="{{ accessForm.color.html_name }}"
+                required
+                class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+                value="{{ accessForm.color.value|default:'#000000' }}"
+              />
+            </div>
+          </div>
+        </div>
+        <button
+          type="submit"
+          name="submitted_form"
+          value="access_level"
+          class="block rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 mt-2"
+        >
+          Add
+        </button>
+      </form>
+    </div>
+  </dialog>
+</div>
+{% if access_levels.count > 0 %}
+<div class="mb-6">
+  {% for access_level in access_levels %}
+  <button
+    class="badge badge-lg"
+    style="background-color: {{ access_level.color }};"
+  >
+    {{ access_level.name }}
+  </button>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-lg text-pretty text-black-900">
+  Geen access levels beschikbaar
+</div>
+{% endif %}

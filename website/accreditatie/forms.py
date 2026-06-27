@@ -24,6 +24,24 @@ class NewAccessLevelForm(forms.Form):
     )
 
 
+class NewSpaceForm(forms.Form):
+    name = forms.CharField(label="Space Name", max_length=100)
+    event = forms.ModelChoiceField(
+        label="Event", queryset=None, empty_label="Select an event"
+    )
+
+    def __init__(self, *args, **kwargs):
+        event = kwargs.pop("event", None)
+        super().__init__(*args, **kwargs)
+        from .models import Event
+
+        self.fields["event"].queryset = Event.objects.all()
+        if event is not None:
+            self.fields["event"].queryset = Event.objects.filter(pk=event.pk)
+            self.fields["event"].initial = event.pk
+            self.fields["event"].widget = forms.HiddenInput()
+
+
 class NewAccessEntryForm(forms.Form):
     name = forms.CharField(label="Name", max_length=100)
     event = forms.ModelChoiceField(
