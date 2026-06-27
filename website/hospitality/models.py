@@ -77,9 +77,16 @@ class Space(models.Model):
 
 
 class SpaceEntry(models.Model):
-    entry = models.ForeignKey("accreditatie.AccessEntry", on_delete=models.CASCADE)
+    entry = models.ForeignKey(
+        "accreditatie.AccessEntry", on_delete=models.CASCADE, related_name="space_entry"
+    )
     space = models.ForeignKey(
-        Space, on_delete=models.CASCADE, default=None, null=True, blank=True
+        Space,
+        on_delete=models.CASCADE,
+        default=None,
+        null=True,
+        blank=True,
+        related_name="space_entry",
     )
 
     def __str__(self):

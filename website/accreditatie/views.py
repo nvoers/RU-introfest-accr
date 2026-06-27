@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, render, redirect
+from django.views.decorators.http import require_POST
 
-from hospitality.models import Space
+from hospitality.models import Space, SpaceEntry
 from .models import Event, Entrance, AccessLevel, AccessEntry
 from django.views.generic import ListView, TemplateView, DetailView
 from .forms import (
@@ -73,17 +74,6 @@ class EventDetailView(TemplateView):
 
         accessForm = NewAccessLevelForm(request.POST)
         spaceForm = NewSpaceForm(request.POST, event=event)
-        # if accessForm.is_valid():
-        #     AccessLevel.objects.create(
-        #         name=accessForm.cleaned_data["name"],
-        #         color=accessForm.cleaned_data["color"],
-        #         event=event,
-        #     )
-        #     return redirect("event_detail", pk=event.pk)
-
-        # if spaceForm.is_valid():
-        #     Space.objects.create(name=spaceForm.cleaned_data["name"], event=event)
-        #     return redirect("event_detail", pk=event.pk)
 
         return render(
             request,
@@ -127,11 +117,13 @@ class AccessEntryDetailView(TemplateView):
         context = super().get_context_data(**kwargs)
         entry = get_object_or_404(AccessEntry, pk=self.kwargs["pk"])
         form = EditAccessEntryForm(instance=entry, event=entry.event)
+        spaces = entry.event.spaces.all()
 
         context.update(
             {
                 "entry": entry,
                 "form": form,
+                "spaces": spaces,
             }
         )
         return context
@@ -210,3 +202,14 @@ class NewAccessEntryView(TemplateView):
                 "form": form,
             },
         )
+
+
+@require_POST
+def assign_space(request, pk):
+    entry = get_object_or_404(AccessEntry, pk=pk)
+    space_id = request.POST.get("space_id")
+    space = get_object_or_404(Space, id=space_id)
+
+    SpaceEntry.objects.get_or_create(entry=entry, space=space)
+
+    return redirect("access_entry_detail", pk=entry.id)

@@ -1,0 +1,169 @@
+<form
+  action="{% url 'access_entry_detail' entry.id %}"
+  method="post"
+  class="space-y-6"
+>
+  {% csrf_token %} {{ form.event }}
+  <div>
+    <div class="flex items-center justify-between">
+      {{ form.non_field_errors }} {{ form.name.errors }}
+      <label
+        for="{{ form.name.id_for_label }}"
+        class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
+        >{{ form.name.label }}</label
+      >
+    </div>
+    <div class="mt-2">
+      <input
+        id="{{ form.name.id_for_label }}"
+        type="text"
+        name="{{ form.name.html_name }}"
+        required
+        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+        value="{{ form.name.value|default:'' }}"
+      />
+    </div>
+  </div>
+
+  <div>
+    <div class="flex items-center justify-between">
+      {{ form.type.errors }}
+      <label
+        for="{{ form.type.id_for_label }}"
+        class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
+        >{{ form.type.label }}</label
+      >
+    </div>
+    <div class="mt-2">
+      <select
+        id="{{ form.type.id_for_label }}"
+        name="{{ form.type.html_name }}"
+        required
+        class="select block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+      >
+        {% for choice in form.type.field.choices %}
+        <option
+          value="{{ choice.0 }}"
+          {%
+          if
+          form.type.value=""
+          ="choice.0"
+          %}selected{%
+          endif
+          %}
+        >
+          {{ choice.1 }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div>
+    <div class="flex items-center justify-between">
+      {{ form.number_of_tickets.errors }}
+      <label
+        for="{{ form.number_of_tickets.id_for_label }}"
+        class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
+        >{{ form.number_of_tickets.label }}</label
+      >
+    </div>
+    <div class="mt-2">
+      <input
+        id="{{ form.number_of_tickets.id_for_label }}"
+        type="number"
+        name="{{ form.number_of_tickets.html_name }}"
+        required
+        class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+        value="{{ form.number_of_tickets.value|default:'' }}"
+      />
+    </div>
+  </div>
+
+  <div>
+    <div class="flex items-center justify-between">
+      {{ form.entrance.errors }}
+      <label
+        for="{{ form.entrance.id_for_label }}"
+        class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
+        >{{ form.entrance.label }}</label
+      >
+    </div>
+    <div class="mt-2">
+      <select
+        id="{{ form.entrance.id_for_label }}"
+        name="{{ form.entrance.html_name }}"
+        required
+        class="select block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+      >
+        {% for choice in form.entrance.field.choices %}
+        <option
+          value="{{ choice.0 }}"
+          {%
+          if
+          form.entrance.value=""
+          ="choice.0"
+          %}selected{%
+          endif
+          %}
+        >
+          {{ choice.1 }}
+        </option>
+        {% empty %}
+        <option
+          value=""
+          disabled
+        >
+          No choices available
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div>
+    <div class="flex items-center justify-between">
+      {{ form.access_level.errors }}
+      <label
+        for="{{ form.access_level.id_for_label }}"
+        class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
+        >{{ form.access_level.label }}</label
+      >
+    </div>
+    <div class="mt-2">
+      <select
+        id="{{ form.access_level.id_for_label }}"
+        name="{{ form.access_level.html_name }}"
+        required
+        class="select block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-red-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
+      >
+        {% for choice in form.access_level.field.choices %}
+        <option
+          value="{{ choice.0 }}"
+          {%
+          if
+          form.access_level.value=""
+          ="choice.0"
+          %}selected{%
+          endif
+          %}
+        >
+          {{ choice.1 }}
+        </option>
+        {% empty %}
+        <option
+          value=""
+          disabled
+        >
+          No choices available
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <input
+    type="submit"
+    value="Save"
+    class="block rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700 mt-2"
+  />
+</form>

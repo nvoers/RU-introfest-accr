@@ -2,6 +2,7 @@ from django.urls import path
 from django.views.generic import RedirectView
 
 from . import views
+from .views import assign_space
 
 urlpatterns = [
     path("", RedirectView.as_view(url="accreditatie/events/")),
@@ -18,4 +19,5 @@ urlpatterns = [
         views.NewAccessEntryView.as_view(),
         name="new_access_entry",
     ),
+    path("access_entry/<int:pk>/assign-space/", assign_space, name="assign_space"),
 ]
