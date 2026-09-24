@@ -1,0 +1,20 @@
+<div class="page-head">
+  <div class="titles">
+    <div class="crumbs"><a href="{% url 'event_list' %}">Events</a><span>/</span></div>
+    <h1>{{ event.name }}</h1>
+    <div class="meta">
+      <span>{% icon "calendar" %}{{ event.date|date:"l j F Y" }}</span>
+      <span>{% icon "clock" %}{{ event.start_time|time:"H:i" }}–{{ event.end_time|time:"H:i" }}</span>
+      <span>{% icon "pin" %}{{ event.location }}</span>
+    </div>
+  </div>
+  <div class="row no-print">
+    <a class="btn" href="{% url 'event_edit' event.pk %}">{% icon "edit" %}Edit event</a>
+    <a class="btn btn-primary" href="{% url 'entry_create' event.pk %}">{% icon "plus" %}New accreditation</a>
+  </div>
+</div>
+<nav class="tabs no-print" aria-label="Event">
+  <a href="{% url 'event_detail' event.pk %}"{% if tab == "entries" %} aria-current="page"{% endif %}>{% icon "list" %}Accreditations</a>
+  <a href="{% url 'checkin' event.pk %}"{% if tab == "checkin" %} aria-current="page"{% endif %}>{% icon "scan" %}Check-in desk</a>
+  <a href="{% url 'event_setup' event.pk %}"{% if tab == "setup" %} aria-current="page"{% endif %}>{% icon "settings" %}Setup</a>
+</nav>

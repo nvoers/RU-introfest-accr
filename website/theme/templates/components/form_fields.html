@@ -1,0 +1,8 @@
+{% comment %}Renders every field of `form` inside a .form-grid. Pass one=True for a single column.{% endcomment %}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+<div class="form-grid{% if one %} one{% endif %}">
+  {% if form.non_field_errors %}
+  <ul class="errorlist nonfield">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% for field in form.visible_fields %}{% include "components/field.html" %}{% endfor %}
+</div>

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Check-in · {{ event.name }}{% endblock %}
+{% block content %}
+{% include "events/_header.html" %}
+
+<div class="split">
+  <section data-filter-scope>
+    <div class="checkin-search">
+      <div class="row" style="flex-wrap: nowrap">
+        <label class="search">
+          <span class="sr-only">Find a person</span>
+          {% icon "search" %}
+          <input class="input" type="search" placeholder="Type a name or organisation…" data-filter="q" data-search-main autofocus autocomplete="off" />
+        </label>
+        <select class="input" data-filter="status" aria-label="Show">
+          <option value="">Everyone</option>
+          <option value="Not Arrived">Not arrived</option>
+          <option value="Arrived">Arrived</option>
+        </select>
+      </div>
+      <p class="muted small kbd-hints" style="margin-top: 0.5rem">
+        <span class="kbd">/</span> to search · <span class="kbd">Enter</span> checks in when one match is left · <span class="kbd">Esc</span> clears
+      </p>
+    </div>
+
+    <div class="checkin-list">
+      {% for entry in entries %}
+      <article class="card checkin-card {% if entry.is_arrived %}arrived{% elif entry.is_cancelled %}cancelled{% endif %}"
+               data-item data-search="{{ entry.name }} {{ entry.organisation }}" data-status="{{ entry.status }}"
+               {% if entry.access_level %}style="--level: {{ entry.access_level.color }}"{% endif %}>
+        <span class="stripe"></span>
+        <div class="body">
+          <div class="who">
+            <a href="{% url 'entry_detail' entry.pk %}">{{ entry.name }}</a>
+            {% if entry.organisation %}<span class="muted">{{ entry.organisation }}</span>{% endif %}
+          </div>
+          <div class="facts">
+            <span class="tickets-pill">{% icon "ticket" %}{{ entry.number_of_tickets }}</span>
+            {% level_badge entry.access_level %}
+            <span class="badge badge-outline">{{ entry.get_access_type_display }}</span>
+            {% if entry.entrance %}<span class="badge badge-neutral">{% icon "door" %}{{ entry.entrance.name }}</span>{% endif %}
+            {% for space in entry.spaces %}<span class="badge badge-info">{{ space.name }}</span>{% endfor %}
+            {% if entry.is_arrived %}<span class="badge badge-success">{% icon "check" %}Arrived {{ entry.checked_in_at|time:"H:i" }}</span>{% endif %}
+            {% if entry.is_cancelled %}<span class="badge badge-danger">Cancelled</span>{% endif %}
+          </div>
+          {% with items=entry.hospitality_items.all %}
+          {% if items %}
+          <div class="handout">
+            Hand out:
+            {% for item in items %}<b>{{ item.total }}× {{ item.type.name }}</b>{% if item.is_issued %} ✓{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+          </div>
+          {% endif %}
+          {% endwith %}
+          {% if entry.notes %}<div class="handout">{% icon "note" %} {{ entry.notes|truncatechars:140 }}</div>{% endif %}
+        </div>
+        <div class="act">
+          {% if not entry.is_cancelled %}
+          <form method="post" action="{% url 'entry_status' entry.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'checkin' event.pk %}" />
+            {% if entry.is_arrived %}
+            <button class="btn" name="status" value="Not Arrived">{% icon "undo" %}Undo</button>
+            {% else %}
+            <button class="btn btn-lg btn-success" name="status" value="Arrived" data-primary>{% icon "check" %}Check in</button>
+            {% endif %}
+          </form>
+          {% endif %}
+        </div>
+      </article>
+      {% empty %}
+      <div class="card empty">
+        {% icon "users" %}
+        <h3>No accreditations yet</h3>
+        <a class="btn btn-primary" href="{% url 'entry_create' event.pk %}">{% icon "plus" %}New accreditation</a>
+      </div>
+      {% endfor %}
+      <div class="card empty" data-filter-empty hidden>
+        {% icon "search" %}
+        <h3>Nobody found</h3>
+        <p>Check the spelling, or add them as a new accreditation.</p>
+        <a class="btn" href="{% url 'entry_create' event.pk %}">{% icon "plus" %}New accreditation</a>
+      </div>
+    </div>
+  </section>
+
+  <aside>
+    <section class="card stat">
+      <div class="label">Arrived</div>
+      <div class="value">{{ stats.arrived }} <small>/ {{ stats.tickets }} tickets</small></div>
+      <div class="progress"><span style="width: {{ stats.percent }}%"></span></div>
+      <p class="muted small" style="margin-top: 0.5rem">{{ stats.expected }} still expected</p>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>Recently checked in</h2></div>
+      {% if recent %}
+      <ul class="list" style="margin: 0.5rem 0">
+        {% for entry in recent %}
+        <li>
+          <span class="grow">
+            <a href="{% url 'entry_detail' entry.pk %}" style="font-weight: 600; text-decoration: none">{{ entry.name }}</a>
+            <span class="muted small">· {{ entry.number_of_tickets }}× · {{ entry.checked_in_at|time:"H:i" }}</span>
+          </span>
+          <form method="post" action="{% url 'entry_status' entry.pk %}" class="inline">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'checkin' event.pk %}" />
+            <button class="btn btn-sm btn-ghost" name="status" value="Not Arrived" title="Undo">{% icon "undo" %}<span class="sr-only">Undo</span></button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty-inline">No one checked in yet.</p>
+      {% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

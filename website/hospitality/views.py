@@ -1,39 +1,49 @@
-from django.shortcuts import render, redirect
-from django.views.generic import TemplateView
+from django.contrib import messages
+from django.db.models import Count
+from django.shortcuts import get_object_or_404, redirect, render
+
+from .forms import HospitalityTypeForm
 from .models import Types
-from .forms import NewHospitalityTypeForm
 
 
-class HospitalityListView(TemplateView):
-    template_name = "hospitality/hospitality_list.html"
+def hospitality_list(request):
+    bound = {}
+    open_dialog = None
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        hospitality_types = Types.objects.all()
-        context["hospitality_types"] = hospitality_types
-        context["form"] = NewHospitalityTypeForm()
-        return context
-
-    def post(self, request, *args, **kwargs):
-        form = NewHospitalityTypeForm(request.POST)
-        hospitality_types = Types.objects.all()
-
-        if form.is_valid():
-            value = form.cleaned_data["value"]
-            if value in (None, ""):
-                value = 1 if form.cleaned_data["type"] == Types.COIN else 0
-
-            hospitality_type = Types(
-                name=form.cleaned_data["name"],
-                type=form.cleaned_data["type"],
-                value=value,
-            )
-            hospitality_type.full_clean()
-            hospitality_type.save()
+    if request.method == "POST":
+        item = None
+        if request.POST.get("item"):
+            item = get_object_or_404(Types, pk=request.POST["item"])
+        if request.POST.get("action") == "delete" and item is not None:
+            item.delete()
+            messages.success(request, f"“{item.name}” deleted.")
             return redirect("hospitality_list")
 
-        context = {
-            "hospitality_types": hospitality_types,
-            "form": form,
+        key = item.pk if item else "new"
+        form = HospitalityTypeForm(request.POST, instance=item, prefix=f"type-{key}")
+        if form.is_valid():
+            saved = form.save()
+            messages.success(
+                request, f"“{saved.name}” {'updated' if item else 'added'}."
+            )
+            return redirect("hospitality_list")
+        bound[key] = form
+        open_dialog = f"dlg-type-{key}"
+
+    rows = [
+        {
+            "item": item,
+            "form": bound.get(item.pk)
+            or HospitalityTypeForm(instance=item, prefix=f"type-{item.pk}"),
         }
-        return render(request, self.template_name, context)
+        for item in Types.objects.annotate(usage=Count("allocations"))
+    ]
+    return render(
+        request,
+        "hospitality/hospitality_list.html",
+        {
+            "rows": rows,
+            "new_form": bound.get("new") or HospitalityTypeForm(prefix="type-new"),
+            "open_dialog": open_dialog,
+        },
+    )

@@ -1,115 +1,96 @@
 from django import forms
 
+from hospitality.models import Space
 
-class NewEventForm(forms.Form):
-    name = forms.CharField(label="Event Name", max_length=100)
-    date = forms.DateField(
-        label="Event Date", widget=forms.DateInput(attrs={"type": "date"})
-    )
-    start_time = forms.TimeField(
-        label="Event Start Time", widget=forms.TimeInput(format="%H:%M")
-    )
-    end_time = forms.TimeField(
-        label="Event End Time", widget=forms.TimeInput(format="%H:%M")
-    )
-    location = forms.CharField(label="Event Location", max_length=200)
+from .models import AccessEntry, AccessLevel, Entrance, Event
 
 
-class NewAccessLevelForm(forms.Form):
-    name = forms.CharField(label="Access Level Name", max_length=100)
-    color = forms.CharField(
-        label="Access Level Color",
-        max_length=7,
-        widget=forms.TextInput(attrs={"type": "color"}),
-    )
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = ["name", "location", "date", "start_time", "end_time"]
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "start_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "end_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+        }
 
 
-class NewSpaceForm(forms.Form):
-    name = forms.CharField(label="Space Name", max_length=100)
-    event = forms.ModelChoiceField(
-        label="Event", queryset=None, empty_label="Select an event"
-    )
+class EventScopedForm(forms.ModelForm):
+    """ModelForm for things that belong to an event, with names unique per event."""
 
-    def __init__(self, *args, **kwargs):
-        event = kwargs.pop("event", None)
+    def __init__(self, *args, event, **kwargs):
         super().__init__(*args, **kwargs)
-        from .models import Event
+        self.event = event
+        self.instance.event = event
 
-        self.fields["event"].queryset = Event.objects.all()
-        if event is not None:
-            self.fields["event"].queryset = Event.objects.filter(pk=event.pk)
-            self.fields["event"].initial = event.pk
-            self.fields["event"].widget = forms.HiddenInput()
-
-
-class NewAccessEntryForm(forms.Form):
-    name = forms.CharField(label="Name", max_length=100)
-    event = forms.ModelChoiceField(
-        label="Event", queryset=None, empty_label="Select an event"
-    )
-    type = forms.ChoiceField(
-        label="Type",
-        choices=[("Artist", "Artist"), ("Crew", "Crew"), ("Guest", "Guest")],
-    )
-    number_of_tickets = forms.IntegerField(label="Number of Tickets", min_value=1)
-    entrance = forms.ModelChoiceField(label="Entrance", queryset=None)
-    access_level = forms.ModelChoiceField(label="Access Level", queryset=None)
-
-    def __init__(self, *args, **kwargs):
-        event = kwargs.pop("event", None)
-        super().__init__(*args, **kwargs)
-        from .models import AccessLevel, Entrance, Event
-
-        self.fields["event"].queryset = Event.objects.all()
-        if event is not None:
-            self.fields["event"].queryset = Event.objects.filter(pk=event.pk)
-            self.fields["event"].initial = event.pk
-            self.fields["event"].widget = forms.HiddenInput()
-            self.fields["entrance"].queryset = Entrance.objects.filter(event=event)
-            self.fields["access_level"].queryset = AccessLevel.objects.filter(
-                event=event
+    def clean_name(self):
+        name = self.cleaned_data["name"].strip()
+        clashes = self._meta.model.objects.filter(
+            event=self.event, name__iexact=name
+        ).exclude(pk=self.instance.pk)
+        if clashes.exists():
+            raise forms.ValidationError(
+                f"“{name}” already exists for this event."
             )
+        return name
 
 
-class EditAccessEntryForm(forms.Form):
-    name = forms.CharField(label="Name", max_length=100)
-    event = forms.ModelChoiceField(
-        label="Event", queryset=None, empty_label="Select an event"
-    )
-    type = forms.ChoiceField(
-        label="Type",
-        choices=[("Artist", "Artist"), ("Crew", "Crew"), ("Guest", "Guest")],
-    )
-    number_of_tickets = forms.IntegerField(label="Number of Tickets", min_value=1)
-    entrance = forms.ModelChoiceField(label="Entrance", queryset=None)
-    access_level = forms.ModelChoiceField(label="Access Level", queryset=None)
+class AccessLevelForm(EventScopedForm):
+    class Meta:
+        model = AccessLevel
+        fields = ["name", "color"]
+        help_texts = {"color": ""}
+        widgets = {"color": forms.TextInput(attrs={"type": "color"})}
 
-    def __init__(self, *args, **kwargs):
-        instance = kwargs.pop("instance", None)
-        event = kwargs.pop("event", None)
+
+class EntranceForm(EventScopedForm):
+    class Meta:
+        model = Entrance
+        fields = ["name"]
+
+
+class SpaceForm(EventScopedForm):
+    class Meta:
+        model = Space
+        fields = ["name"]
+
+
+class AccessEntryForm(forms.ModelForm):
+    class Meta:
+        model = AccessEntry
+        fields = [
+            "name",
+            "organisation",
+            "access_type",
+            "number_of_tickets",
+            "access_level",
+            "entrance",
+            "email",
+            "phone",
+            "notes",
+        ]
+        widgets = {
+            "number_of_tickets": forms.NumberInput(attrs={"min": 1}),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, event, **kwargs):
         super().__init__(*args, **kwargs)
-        from .models import AccessLevel, Entrance, Event
+        self.instance.event = event
+        self.fields["access_level"].queryset = event.access_levels.all()
+        self.fields["entrance"].queryset = event.entrances.all()
+        self.fields["access_level"].empty_label = "No access level"
+        self.fields["entrance"].empty_label = "No entrance"
+        self.fields["name"].widget.attrs["autofocus"] = True
 
-        self.fields["event"].queryset = Event.objects.all()
-        if event is not None:
-            self.fields["event"].queryset = Event.objects.filter(pk=event.pk)
-            self.fields["event"].initial = event.pk
-            self.fields["event"].widget = forms.HiddenInput()
-            self.fields["entrance"].queryset = Entrance.objects.filter(event=event)
-            self.fields["access_level"].queryset = AccessLevel.objects.filter(
-                event=event
-            )
 
-        if instance is not None:
-            self.initial["name"] = instance.name
-            self.initial["event"] = instance.event
-            self.initial["type"] = instance.access_type
-            self.initial["number_of_tickets"] = instance.number_of_tickets
-            self.initial["entrance"] = instance.entrance
-            self.initial["access_level"] = instance.access_level
-            self.fields["name"].initial = instance.name
-            self.fields["event"].initial = instance.event
-            self.fields["type"].initial = instance.access_type
-            self.fields["number_of_tickets"].initial = instance.number_of_tickets
-            self.fields["entrance"].initial = instance.entrance
-            self.fields["access_level"].initial = instance.access_level
+class ImportForm(forms.Form):
+    file = forms.FileField(
+        label="CSV file",
+        help_text=(
+            "Columns: name, organisation, type, tickets, access_level, entrance, "
+            "email, phone, notes. Only name is required."
+        ),
+        widget=forms.ClearableFileInput(attrs={"accept": ".csv,text/csv"}),
+    )

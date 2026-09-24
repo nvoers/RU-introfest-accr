@@ -1,36 +1,18 @@
-"""
-URL configuration for intro project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
-
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from django.contrib.auth import views as auth_views
-from django.conf import settings
 from django.views.generic import RedirectView
 
 urlpatterns = [
-    path("", RedirectView.as_view(url="accreditatie/events/")),
     path("admin/", admin.site.urls),
-    path("accreditatie/", include("accreditatie.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
     path("hospitality/", include("hospitality.urls")),
+    # Old URL prefix; keep bookmarks working.
+    path("accreditatie/", RedirectView.as_view(pattern_name="event_list")),
+    path("", include("accreditatie.urls")),
 ]
 
-if settings.DEBUG:
-    # Include django_browser_reload URLs only in DEBUG mode
+if settings.BROWSER_RELOAD:
     urlpatterns += [
         path("__reload__/", include("django_browser_reload.urls")),
     ]

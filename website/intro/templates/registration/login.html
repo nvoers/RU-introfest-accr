@@ -1,77 +1,34 @@
-{% extends "base.html" %} {% comment %}
-<h2>Log In</h2>
-<form method="post">
-  {% csrf_token %} {{ form }}
-  <button type="submit">Log In</button>
-</form>
-{% endcomment %} {% block content %}
-<div class="flex min-h-full flex-col justify-center px-6 pt-32">
-  <div class="sm:mx-auto sm:w-full">
-    <h1
-      class="text-center text-6xl font-bold tracking-tight text-gray-900 dark:text-white"
-    >
-      IN.T.R.O.
-    </h1>
-    <h2
-      class="mt-2 text-center text-xl font-bold tracking-tight text-gray-900 dark:text-white"
-    >
-      Inschrijving, Toegang & Registratie Organisatie
-    </h2>
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block body %}
+<div class="login">
+  <div class="login-art">
+    <div>
+      <div class="big">IN.T.R.O.</div>
+      <p>Inschrijving, Toegang &amp; Registratie Organisatie</p>
+    </div>
+    <p class="small">Accreditation &amp; check-in</p>
   </div>
-
-  <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-    <form
-      action="#"
-      method="POST"
-      class="space-y-6"
-    >
+  <div class="login-form">
+    <form method="post">
       {% csrf_token %}
-      <div>
-        <label
-          for="username"
-          class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
-          >Username</label
-        >
-        <div class="mt-2">
-          <input
-            id="username"
-            type="text"
-            name="username"
-            required
-            autocomplete="username"
-            class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
-          />
+      <h1 style="margin-bottom: 0.35rem">Sign in</h1>
+      <p class="muted" style="margin-bottom: 1.5rem">Use your crew account.</p>
+      {% if form.errors %}
+      <ul class="errorlist nonfield" style="margin-bottom: 1rem"><li>That username and password don't match. Try again.</li></ul>
+      {% endif %}
+      <input type="hidden" name="next" value="{{ next }}" />
+      <div class="form-grid one">
+        <div class="field">
+          <label for="id_username">Username</label>
+          <input id="id_username" name="username" autocomplete="username" autofocus required value="{{ form.username.value|default:'' }}" />
+        </div>
+        <div class="field">
+          <label for="id_password">Password</label>
+          <input id="id_password" type="password" name="password" autocomplete="current-password" required />
         </div>
       </div>
-
-      <div>
-        <div class="flex items-center justify-between">
-          <label
-            for="password"
-            class="block text-sm/6 font-medium text-gray-900 dark:text-gray-100"
-            >Password</label
-          >
-        </div>
-        <div class="mt-2">
-          <input
-            id="password"
-            type="password"
-            name="password"
-            required
-            autocomplete="current-password"
-            class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-red-600 sm:text-sm/6"
-          />
-        </div>
-      </div>
-
-      <div>
-        <button
-          type="submit"
-          class="flex w-full justify-center rounded-md bg-red-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-red-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
-        >
-          Sign in
-        </button>
-      </div>
+      <button class="btn btn-primary btn-lg" type="submit" style="width: 100%; margin-top: 1.5rem">Sign in</button>
     </form>
   </div>
 </div>

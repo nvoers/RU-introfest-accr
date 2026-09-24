@@ -21,12 +21,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-o2ba#!gmp#h6u(m-a2d8c=fe_#&dv9o=5rs@-5#jv4pz$-0q4("
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-o2ba#!gmp#h6u(m-a2d8c=fe_#&dv9o=5rs@-5#jv4pz$-0q4(",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    h for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h
+]
+CSRF_TRUSTED_ORIGINS = [
+    o for o in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",") if o
+]
 
 
 # Application definition
@@ -40,7 +48,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "tailwind",
     "theme",
 ]
 
@@ -55,9 +62,14 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.LoginRequiredMiddleware",
 ]
 
-TAILWIND_APP_NAME = "theme"
+try:
+    import django_browser_reload  # noqa: F401
 
-if DEBUG:
+    BROWSER_RELOAD = DEBUG
+except ImportError:
+    BROWSER_RELOAD = False
+
+if BROWSER_RELOAD:
     # Add django_browser_reload only in DEBUG mode
     INSTALLED_APPS += ["django_browser_reload"]
     # Add django_browser_reload middleware only in DEBUG mode
@@ -79,6 +91,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
+            "builtins": ["theme.templatetags.ui"],
         },
     },
 ]
@@ -92,7 +105,7 @@ WSGI_APPLICATION = "intro.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": os.environ.get("DJANGO_DB_PATH", BASE_DIR / "db.sqlite3"),
     }
 }
 
@@ -125,7 +138,7 @@ LOGOUT_REDIRECT_URL = "/"
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "CET"
+TIME_ZONE = "Europe/Amsterdam"
 
 USE_I18N = True
 
@@ -136,6 +149,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
