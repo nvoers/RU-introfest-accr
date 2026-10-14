@@ -160,7 +160,7 @@ def process_scan(event, code, zone=None, direction=Scan.IN, user=None):
                 "color": acc.type.color,
                 "zones": [z.code or z.name for z in acc.all_zones()],
                 "items": [
-                    {"id": i.pk, "label": f"{i.quantity}× {i.item.name}", "issued": i.is_issued}
+                    {"id": i.pk, "label": i.label, "issued": i.is_issued}
                     for i in acc.items.select_related("item")
                 ],
                 "url": acc.get_absolute_url(),

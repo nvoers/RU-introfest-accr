@@ -18,11 +18,36 @@ class ZoneForm(EventModelForm):
 class ItemForm(EventModelForm):
     class Meta:
         model = Item
-        fields = ["name", "kind", "description"]
+        fields = ["name", "kind", "default_amount", "description"]
+        widgets = {"default_amount": forms.NumberInput(attrs={"step": "0.01", "min": 0})}
+
+    def clean(self):
+        data = super().clean()
+        if data.get("kind") == Item.PAYMENT_CARD:
+            if data.get("default_amount") is None:
+                self.add_error("default_amount", "Set the standard amount on this card (can be 0).")
+        else:
+            data["default_amount"] = None
+        return data
+
+    def save(self, commit=True):
+        became_card = (
+            self.instance.pk
+            and "kind" in self.changed_data
+            and self.cleaned_data["kind"] == Item.PAYMENT_CARD
+        )
+        item = super().save(commit=commit)
+        if became_card:
+            # An existing item turned into a payment card: quantities meant "number of
+            # items" before, so credentials now give one card at the default amount,
+            # and people who already have it get the default amount instead of €0.
+            item.typeitem_set.update(quantity=1, amount=None)
+            item.handouts.filter(amount__isnull=True).update(amount=item.default_amount)
+        return item
 
 
 class TypeForm(EventModelForm):
-    """Credential type with its zones and one quantity field per item."""
+    """Credential type with its zones, one quantity field per item and an amount per payment card."""
 
     event_querysets = {"zones": "zones"}
 
@@ -35,23 +60,49 @@ class TypeForm(EventModelForm):
         super().__init__(*args, **kwargs)
         current = {}
         if self.instance.pk:
-            current = dict(self.instance.default_items.values_list("item_id", "quantity"))
+            current = {
+                d.item_id: d for d in self.instance.default_items.select_related("item")
+            }
         self.item_fields = []
         for item in self.event.items.all():
             name = f"item_{item.pk}"
-            self.fields[name] = forms.IntegerField(
-                label=item.name, min_value=0, required=False, initial=current.get(item.pk, 0)
-            )
+            existing = current.get(item.pk)
+            if item.is_payment_card:
+                # Empty = no card for this credential; a value = card with that amount.
+                self.fields[name] = forms.DecimalField(
+                    label=f"{item.name} (€)",
+                    min_value=0,
+                    max_digits=8,
+                    decimal_places=2,
+                    required=False,
+                    initial=existing.card_amount() if existing else None,
+                    widget=forms.NumberInput(
+                        attrs={"step": "0.01", "placeholder": f"{item.default_amount or 0:.2f}"}
+                    ),
+                    help_text="Empty = no card",
+                )
+            else:
+                self.fields[name] = forms.IntegerField(
+                    label=item.name,
+                    min_value=0,
+                    required=False,
+                    initial=existing.quantity if existing else 0,
+                )
             self.item_fields.append(name)
+        self.cards = {i.pk for i in self.event.items.all() if i.is_payment_card}
 
     def save(self, commit=True):
         obj = super().save(commit=commit)
         for name in self.item_fields:
             item_id = int(name.split("_")[1])
-            qty = self.cleaned_data.get(name) or 0
-            if qty:
+            value = self.cleaned_data.get(name)
+            if item_id in self.cards and value is not None:
                 TypeItem.objects.update_or_create(
-                    type=obj, item_id=item_id, defaults={"quantity": qty}
+                    type=obj, item_id=item_id, defaults={"quantity": 1, "amount": value}
+                )
+            elif item_id not in self.cards and value:
+                TypeItem.objects.update_or_create(
+                    type=obj, item_id=item_id, defaults={"quantity": value, "amount": None}
                 )
             else:
                 TypeItem.objects.filter(type=obj, item_id=item_id).delete()

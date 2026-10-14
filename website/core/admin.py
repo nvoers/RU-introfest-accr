@@ -14,6 +14,11 @@ class EventAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ["name"]}
     inlines = [DayInline]
 
+    def delete_queryset(self, request, queryset):
+        # Event.delete() clears protected relations first; a bulk delete would skip it.
+        for event in queryset:
+            event.delete()
+
 
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):

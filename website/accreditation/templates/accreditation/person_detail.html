@@ -52,7 +52,14 @@
       <ul class="list">
         {% for h in handouts %}
         <li>
-          <span class="grow"><b>{{ h.quantity }}× {{ h.item.name }}</b> <span class="muted small">{{ h.item.get_kind_display }}</span></span>
+          <span class="grow">{% if h.is_payment_card %}<b>{{ h.item.name }}</b>{% if h.quantity > 1 %} <span class="muted small">× {{ h.quantity }}</span>{% endif %}{% else %}<b>{{ h.quantity }}× {{ h.item.name }}</b> <span class="muted small">{{ h.item.get_kind_display }}</span>{% endif %}</span>
+          {% if h.is_payment_card %}
+          <form method="post" class="row nowrap" style="--gap:.35rem">{% csrf_token %}<input type="hidden" name="handout" value="{{ h.pk }}" />
+            <label class="sr-only" for="amt-{{ h.pk }}">Amount</label>
+            <span class="muted">€</span><input class="input" id="amt-{{ h.pk }}" name="amount" value="{{ h.amount|default_if_none:'0.00'|stringformat:'.2f' }}" inputmode="decimal" style="width:90px;height:30px;text-align:right" />
+            <button class="btn btn-sm" name="action" value="item_amount">Save</button>
+          </form>
+          {% endif %}
           <form method="post" class="inline">{% csrf_token %}<input type="hidden" name="handout" value="{{ h.pk }}" />
             <button class="btn btn-sm{% if not h.is_issued %} btn-success{% endif %}" name="action" value="item_toggle">{% if h.is_issued %}{% icon "check" %}Issued {{ h.issued_at|date:"j M H:i" }}{% else %}Mark issued{% endif %}</button>
             <button class="btn btn-sm btn-ghost btn-icon btn-danger" name="action" value="item_remove" title="Remove">{% icon "x" %}</button>
@@ -64,8 +71,9 @@
       {% if available_items %}
       <form method="post" class="card-foot row nowrap">
         {% csrf_token %}<input type="hidden" name="action" value="item_add" />
-        <select class="input" name="item" aria-label="Item">{% for i in available_items %}<option value="{{ i.pk }}">{{ i.name }}</option>{% endfor %}</select>
-        <input class="input" type="number" name="quantity" value="1" min="1" style="width:80px" aria-label="Quantity" />
+        <select class="input" name="item" aria-label="Item" onchange="this.form.amount.hidden=!this.selectedOptions[0].dataset.card;this.form.quantity.hidden=!this.form.amount.hidden">{% for i in available_items %}<option value="{{ i.pk }}"{% if i.is_payment_card %} data-card="1"{% endif %}>{{ i.name }}</option>{% endfor %}</select>
+        <input class="input" type="number" name="quantity" value="1" min="1" style="width:70px" aria-label="Quantity"{% if available_items.0.is_payment_card %} hidden{% endif %} />
+        <input class="input" name="amount" inputmode="decimal" placeholder="€ amount" style="width:100px" aria-label="Amount on the card"{% if not available_items.0.is_payment_card %} hidden{% endif %} />
         <button class="btn">{% icon "plus" %}Add</button>
       </form>
       {% endif %}

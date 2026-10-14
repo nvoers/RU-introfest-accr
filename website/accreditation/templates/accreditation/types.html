@@ -13,7 +13,7 @@
     <div class="card-body">
       <dl class="kv" style="grid-template-columns:90px 1fr">
         <dt>Zones</dt><dd class="tags">{% for z in obj.zones.all %}{% pill z %}{% empty %}<span class="faint">None</span>{% endfor %}</dd>
-        <dt>Items</dt><dd class="small">{% for d in obj.default_items.all %}{{ d.quantity }}× {{ d.item.name }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="faint">None</span>{% endfor %}</dd>
+        <dt>Items</dt><dd class="small">{% for d in obj.default_items.all %}{% if d.item.is_payment_card %}{{ d.item.name }} {{ d.card_amount|money }}{% else %}{{ d.quantity }}× {{ d.item.name }}{% endif %}{% if not forloop.last %}, {% endif %}{% empty %}<span class="faint">None</span>{% endfor %}</dd>
         <dt>Approval</dt><dd class="small">{% if obj.requires_approval %}Required for portal requests{% else %}<span class="badge tone-info">Auto-approve</span>{% endif %}</dd>
         <dt>People</dt><dd class="small">{{ obj.n }}</dd>
       </dl>

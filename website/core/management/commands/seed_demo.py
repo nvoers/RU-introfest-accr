@@ -2,8 +2,9 @@
 
 import random
 from datetime import time, timedelta
+from decimal import Decimal
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from accreditation import services
@@ -33,12 +34,21 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--name", default="Introfestival Demo")
+        parser.add_argument(
+            "--replace", action="store_true", help="Delete an existing event with this name first."
+        )
 
-    def handle(self, *args, name, **options):
+    def handle(self, *args, name, replace=False, **options):
+        if Event.objects.filter(name=name).exists() and not replace:
+            raise CommandError(
+                f"An event named “{name}” already exists. Use --replace to delete and recreate it, "
+                "or --name to pick another name."
+            )
         rnd = random.Random(42)
         person = lambda: (rnd.choice(FIRST), rnd.choice(LAST))  # noqa: E731
         today = timezone.localdate()
-        Event.objects.filter(name=name).delete()
+        for existing in Event.objects.filter(name=name):
+            existing.delete()
         event = Event.objects.create(
             name=name,
             start_date=today - timedelta(days=1),
@@ -64,6 +74,10 @@ class Command(BaseCommand):
                          ("Guest wristband", "wristband"), ("Drink tokens", "voucher"),
                          ("Meal voucher", "voucher"), ("Parking P2", "parking"), ("Crew T-shirt", "merch")]
         }
+        it["Payment card"] = Item.objects.create(
+            event=event, name="Payment card", kind=Item.PAYMENT_CARD, default_amount=Decimal("10.00"),
+            description="Cashless card for food & drinks on the terrain",
+        )
 
         def ctype(name, color, zones, items, approval=True, order=0):
             t = AccreditationType.objects.create(
@@ -71,16 +85,19 @@ class Command(BaseCommand):
             )
             t.zones.set([z[n] for n in zones])
             for item, qty in items:
-                TypeItem.objects.create(type=t, item=it[item], quantity=qty)
+                if it[item].is_payment_card:
+                    TypeItem.objects.create(type=t, item=it[item], quantity=1, amount=Decimal(str(qty)))
+                else:
+                    TypeItem.objects.create(type=t, item=it[item], quantity=qty)
             return t
 
-        artist_t = ctype("Artist", "#e0457b", ["Terrain", "Backstage", "Stage"], [("Artist wristband", 1), ("Drink tokens", 10), ("Meal voucher", 1)], order=1)
-        crew_t = ctype("Crew", "#111827", ["Terrain", "Backstage", "Stage", "Production"], [("Crew wristband", 1), ("Meal voucher", 1), ("Crew T-shirt", 1)], order=2)
+        artist_t = ctype("Artist", "#e0457b", ["Terrain", "Backstage", "Stage"], [("Artist wristband", 1), ("Meal voucher", 1), ("Payment card", 25)], order=1)
+        crew_t = ctype("Crew", "#111827", ["Terrain", "Backstage", "Stage", "Production"], [("Crew wristband", 1), ("Meal voucher", 1), ("Crew T-shirt", 1), ("Payment card", 15)], order=2)
         prod_t = ctype("Production", "#2563eb", list(z), [("Crew wristband", 1), ("Parking P2", 1)], order=3)
-        guest_t = ctype("Guest", "#facc15", ["Terrain", "VIP"], [("Guest wristband", 1), ("Drink tokens", 4)], order=4)
+        guest_t = ctype("Guest", "#facc15", ["Terrain", "VIP"], [("Guest wristband", 1), ("Payment card", 20)], order=4)
         press_t = ctype("Press", "#14b8a6", ["Terrain", "Backstage"], [("Guest wristband", 1)], order=5)
         supplier_t = ctype("Supplier", "#78716c", ["Terrain", "Production"], [("Parking P2", 1)], approval=False, order=6)
-        vol_t = ctype("Volunteer", "#16a34a", ["Terrain"], [("Crew wristband", 1), ("Meal voucher", 1), ("Crew T-shirt", 1)], order=7)
+        vol_t = ctype("Volunteer", "#16a34a", ["Terrain"], [("Crew wristband", 1), ("Meal voucher", 1), ("Crew T-shirt", 1), ("Payment card", 7.5)], order=7)
 
         def add(company, type_, status="approved", role="", days=None):
             first, last = person()

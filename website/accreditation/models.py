@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
@@ -27,9 +30,10 @@ class Zone(models.Model):
 class Item(models.Model):
     """Something handed out with an accreditation: wristband, voucher, parking ticket."""
 
-    WRISTBAND, VOUCHER, PARKING, MERCH, OTHER = (
+    WRISTBAND, VOUCHER, PAYMENT_CARD, PARKING, MERCH, OTHER = (
         "wristband",
         "voucher",
+        "payment_card",
         "parking",
         "merch",
         "other",
@@ -37,6 +41,7 @@ class Item(models.Model):
     KINDS = {
         WRISTBAND: "Wristband",
         VOUCHER: "Voucher / token",
+        PAYMENT_CARD: "Payment card",
         PARKING: "Parking ticket",
         MERCH: "Merchandise",
         OTHER: "Other",
@@ -46,12 +51,26 @@ class Item(models.Model):
     name = models.CharField(max_length=100)
     kind = models.CharField(max_length=20, choices=KINDS.items(), default=VOUCHER)
     description = models.CharField(max_length=200, blank=True)
+    default_amount = models.DecimalField(
+        "default amount",
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text="Payment cards only: credit loaded on each card unless the credential "
+        "or person says otherwise.",
+    )
 
     class Meta:
         ordering = ["kind", "name"]
 
     def __str__(self):
         return self.name
+
+    @property
+    def is_payment_card(self):
+        return self.kind == self.PAYMENT_CARD
 
 
 class AccreditationType(models.Model):
@@ -82,11 +101,23 @@ class TypeItem(models.Model):
     )
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
+    amount = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Payment cards: credit for this credential (overrides the item default).",
+    )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["type", "item"], name="unique_type_item")
         ]
+
+    def card_amount(self):
+        if self.amount is not None:
+            return self.amount
+        return self.item.default_amount or Decimal("0")
 
 
 class Company(models.Model):
@@ -298,7 +329,12 @@ class Accreditation(models.Model):
         have = set(self.items.values_list("item_id", flat=True))
         AccreditationItem.objects.bulk_create(
             [
-                AccreditationItem(accreditation=self, item=d.item, quantity=d.quantity)
+                AccreditationItem(
+                    accreditation=self,
+                    item=d.item,
+                    quantity=d.quantity,
+                    amount=d.card_amount() if d.item.is_payment_card else None,
+                )
                 for d in self.type.default_items.select_related("item")
                 if d.item_id not in have
             ]
@@ -321,6 +357,15 @@ class AccreditationItem(models.Model):
     )
     item = models.ForeignKey(Item, on_delete=models.CASCADE, related_name="handouts")
     quantity = models.PositiveIntegerField(default=1)
+    amount = models.DecimalField(
+        "credit",
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text="Payment cards: amount on the card for this person.",
+    )
     issued_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -334,6 +379,28 @@ class AccreditationItem(models.Model):
     @property
     def is_issued(self):
         return self.issued_at is not None
+
+    @property
+    def is_payment_card(self):
+        return self.item.is_payment_card
+
+    @property
+    def total_amount(self):
+        """Total credit: amount per card × number of cards."""
+        return (self.amount or Decimal("0")) * self.quantity
+
+    @property
+    def label(self):
+        if self.is_payment_card:
+            return f"{self.quantity}× {self.item.name} · {money(self.amount)}"
+        return f"{self.quantity}× {self.item.name}"
+
+
+def money(value):
+    from django.conf import settings
+
+    symbol = getattr(settings, "CURRENCY_SYMBOL", "€")
+    return f"{symbol}{(value or Decimal('0')):,.2f}"
 
 
 class Scan(models.Model):

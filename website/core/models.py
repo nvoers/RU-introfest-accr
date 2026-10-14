@@ -40,6 +40,23 @@ class Event(models.Model):
         super().save(*args, **kwargs)
         self.sync_days()
 
+    def delete(self, *args, **kwargs):
+        """Remove protected dependents first (performances, shifts, people…), then the event."""
+        from django.db import transaction
+
+        from accreditation.models import Accreditation
+        from artists.models import Artist, HotelRoom, Performance, Transport
+        from crew.models import Shift
+
+        with transaction.atomic():
+            Performance.objects.filter(artist__event=self).delete()
+            Transport.objects.filter(artist__event=self).delete()
+            HotelRoom.objects.filter(artist__event=self).delete()
+            Artist.objects.filter(event=self).delete()
+            Shift.objects.filter(team__event=self).delete()
+            Accreditation.objects.filter(event=self).delete()
+            return super().delete(*args, **kwargs)
+
     def sync_days(self):
         """Make sure there is an EventDay for every date in the range."""
         dates = []

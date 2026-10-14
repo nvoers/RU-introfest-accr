@@ -2,20 +2,20 @@
 {% block title %}Items{% endblock %}
 {% block content %}
 <div class="page-head">
-  <div class="titles"><h1>Items</h1><p>Wristbands, vouchers and parking tickets handed out at the desk. Credentials can include them by default.</p></div>
+  <div class="titles"><h1>Items</h1><p>Wristbands, vouchers, payment cards and parking tickets handed out at the desk. Credentials can include them by default.</p></div>
   <button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New item</button>
 </div>
 <section class="card">
   {% if rows %}
   <div class="table-wrap"><table class="table">
-    <thead><tr><th>Item</th><th>Kind</th><th class="hide-sm">Description</th><th class="num">Allocated</th><th class="actions"></th></tr></thead>
+    <thead><tr><th>Item</th><th>Kind</th><th class="num">Default amount</th><th class="hide-sm">Description</th><th class="num">Allocated</th><th class="actions"></th></tr></thead>
     <tbody>{% for row in rows %}{% with obj=row.obj %}
-      <tr><td><b>{{ obj.name }}</b></td><td><span class="badge">{{ obj.get_kind_display }}</span></td><td class="hide-sm muted">{{ obj.description|default:"—" }}</td>
+      <tr><td><b>{{ obj.name }}</b></td><td><span class="badge{% if obj.is_payment_card %} tone-accent{% endif %}">{{ obj.get_kind_display }}</span></td><td class="num">{% if obj.is_payment_card %}{{ obj.default_amount|money }}{% else %}<span class="faint">—</span>{% endif %}</td><td class="hide-sm muted">{{ obj.description|default:"—" }}</td>
       <td class="num">{{ obj.n }}</td><td class="actions">{% include "components/row_actions.html" %}</td></tr>
     {% endwith %}{% endfor %}</tbody>
   </table></div>
   {% else %}
-  <div class="empty">{% icon "box" %}<h3>No items yet</h3><p>e.g. “Crew wristband”, “Drink tokens”, “Parking P2”.</p><button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New item</button></div>
+  <div class="empty">{% icon "box" %}<h3>No items yet</h3><p>e.g. “Crew wristband”, “Drink tokens”, “Payment card”, “Parking P2”.</p><button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New item</button></div>
   {% endif %}
 </section>
 {% include "components/crud_dialogs.html" %}

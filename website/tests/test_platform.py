@@ -87,6 +87,18 @@ class EventTests(Base):
                 self.assertEqual(self.client.get(url).status_code, 200)
         self.assertEqual(self.client.get(reverse("people_export", args=[event.slug])).status_code, 200)
 
+        # Deleting a fully populated event works (protected relations are removed first).
+        response = self.client.post(reverse("event_delete", args=[event.slug]), {"confirm": "Demo"})
+        self.assertRedirects(response, reverse("event_list"))
+        self.assertFalse(Event.objects.filter(name="Demo").exists())
+
+    def test_seed_refuses_to_overwrite(self):
+        from django.core.management.base import CommandError
+
+        call_command("seed_demo", name="Fest2", stdout=open("/dev/null", "w"))
+        with self.assertRaises(CommandError):
+            call_command("seed_demo", name="Fest2", stdout=open("/dev/null", "w"))
+
 
 class SetupTests(Base):
     def test_type_form_sets_default_items(self):

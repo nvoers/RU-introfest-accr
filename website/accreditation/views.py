@@ -1,5 +1,6 @@
 import csv
 import json
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -23,7 +24,16 @@ from .forms import (
     TypeForm,
     ZoneForm,
 )
-from .models import Accreditation, AccreditationItem, Company, Item, Scan, Zone
+from .models import Accreditation, AccreditationItem, Company, Item, Scan, Zone, money
+
+
+def parse_amount(value):
+    """A non-negative euro amount from user input ("12,50" works too), or None."""
+    try:
+        amount = Decimal(str(value).strip().replace(",", ".")).quantize(Decimal("0.01"))
+    except (InvalidOperation, ValueError):
+        return None
+    return amount if 0 <= amount < Decimal("1000000") else None
 
 # --------------------------------------------------------------------- setup
 
@@ -71,7 +81,7 @@ def types(request, slug):
 
 def people_queryset(event):
     return event.accreditations.select_related("type", "company").prefetch_related(
-        "days"
+        "days", Prefetch("items", queryset=AccreditationItem.objects.select_related("item"))
     )
 
 
@@ -109,6 +119,7 @@ def people(request, slug):
             "filtered": any(f.values()),
             "counts": counts,
             "statuses": Accreditation.STATUSES,
+            "card_items": event.items.filter(kind=Item.PAYMENT_CARD),
         },
         section="people",
     )
@@ -121,6 +132,8 @@ def bulk_action(request, event):
         ids, action = [request.POST["single"]], "approve"
     selected = event.accreditations.filter(pk__in=ids).select_related("type", "event")
     done = 0
+    if action == "card":
+        return bulk_card(request, event, selected)
     for acc in selected:
         if action == "approve" and acc.status != Accreditation.APPROVED:
             services.approve(acc, request.user)
@@ -141,6 +154,25 @@ def bulk_action(request, event):
         if done:
             log(event, f"Bulk {labels[action]} {done} accreditation(s)", request.user)
         messages.success(request, f"{done} accreditation{'s' if done != 1 else ''} {labels[action]}.")
+    return safe_next(request, request.get_full_path())
+
+
+def bulk_card(request, event, selected):
+    """Give the selected people a payment card with the same amount (or update it)."""
+    item = event.items.filter(kind=Item.PAYMENT_CARD, pk=request.POST.get("card_item")).first()
+    amount = parse_amount(request.POST.get("card_amount", ""))
+    if item is None or amount is None:
+        messages.error(request, "Choose a payment card and enter a valid amount.")
+        return safe_next(request, request.get_full_path())
+    n = 0
+    for acc in selected:
+        AccreditationItem.objects.update_or_create(
+            accreditation=acc, item=item, defaults={"amount": amount}
+        )
+        n += 1
+    if n:
+        log(event, f"Set {item.name} to {money(amount)} for {n} people", request.user)
+    messages.success(request, f"{item.name} of {money(amount)} set for {n} {'person' if n == 1 else 'people'}.")
     return safe_next(request, request.get_full_path())
 
 
@@ -232,7 +264,22 @@ def person_action(request, acc):
             qty = max(1, int(request.POST.get("quantity") or 1))
         except ValueError:
             qty = 1
-        AccreditationItem.objects.get_or_create(accreditation=acc, item=item, defaults={"quantity": qty})
+        defaults = {"quantity": qty}
+        if item.is_payment_card:
+            amount = parse_amount(request.POST.get("amount", ""))
+            defaults["amount"] = amount if amount is not None else (item.default_amount or 0)
+        AccreditationItem.objects.get_or_create(accreditation=acc, item=item, defaults=defaults)
+    elif action == "item_amount":
+        handout = get_object_or_404(acc.items.select_related("item"), pk=request.POST.get("handout"))
+        amount = parse_amount(request.POST.get("amount", ""))
+        if amount is None:
+            messages.error(request, "Enter a valid amount, e.g. 12.50.")
+        else:
+            handout.amount = amount
+            handout.save(update_fields=["amount"])
+            log(acc.event, f"{handout.item.name} for {acc.full_name} set to {money(amount)}",
+                user, url=acc.get_absolute_url())
+            messages.success(request, f"{handout.item.name} set to {money(amount)}.")
     elif action == "item_toggle":
         handout = get_object_or_404(acc.items, pk=request.POST.get("handout"))
         handout.issued_at = None if handout.is_issued else timezone.now()
@@ -283,9 +330,11 @@ def export_people(request, slug):
     writer = csv.writer(response)
     writer.writerow(
         ["first_name", "last_name", "company", "type", "function", "email", "phone",
-         "days", "zones", "status", "checked_in", "ticket_url"]
+         "days", "zones", "items", "payment_card_total", "status", "checked_in", "ticket_url"]
     )
     for acc in people_queryset(event).prefetch_related("extra_zones", "type__zones"):
+        handouts = list(acc.items.all())
+        card_total = sum((h.total_amount for h in handouts if h.is_payment_card), Decimal("0"))
         writer.writerow(
             [
                 acc.first_name,
@@ -297,6 +346,8 @@ def export_people(request, slug):
                 acc.phone,
                 "; ".join(d.short for d in acc.days.all()) or "All",
                 "; ".join(z.name for z in acc.all_zones()),
+                "; ".join(h.label for h in handouts),
+                f"{card_total:.2f}" if any(h.is_payment_card for h in handouts) else "",
                 acc.get_status_display(),
                 timezone.localtime(acc.first_check_in_at).strftime("%Y-%m-%d %H:%M")
                 if acc.first_check_in_at

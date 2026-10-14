@@ -2,6 +2,7 @@
   {% if form.non_field_errors %}<ul class="errorlist nonfield">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
   {% for field in form.plain_fields %}{% include "components/field.html" %}{% endfor %}
   <div class="fieldset-title">Handed out by default (per person)</div>
+  {% if form.cards %}<p class="help wide" style="margin-top:-.6rem">Payment cards: enter the amount for this credential, or leave empty for no card.</p>{% endif %}
   {% if form.item_fields %}
   <div class="qty-grid">{% for field in form.item_bound_fields %}{% include "components/field.html" %}{% endfor %}</div>
   {% else %}<p class="muted small wide">No items defined yet.</p>{% endif %}

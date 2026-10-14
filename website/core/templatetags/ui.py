@@ -81,6 +81,13 @@ def status(obj, field="status"):
 
 
 @register.filter
+def money(value):
+    from accreditation.models import money as fmt
+
+    return fmt(value)
+
+
+@register.filter
 def percent(part, whole):
     try:
         return min(100, round((part or 0) / whole * 100)) if whole else 0
