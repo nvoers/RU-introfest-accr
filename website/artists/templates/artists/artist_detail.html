@@ -1,0 +1,63 @@
+{% extends "app.html" %}
+{% block title %}{{ artist.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles">
+    <div class="crumbs"><a href="{% url 'artist_list' event.slug %}">Artists</a><span>/</span></div>
+    <h1>{{ artist.name }}</h1>
+    <div class="meta">{% status artist "advancing_status" %}{% if artist.agent %}<span>Agent: {{ artist.agent }}</span>{% endif %}{% if artist.company.contact_name %}<span>{% icon "users" %}{{ artist.company.contact_name }}</span>{% endif %}{% if artist.company.contact_email %}<span>{% icon "mail" %}<a class="link" href="mailto:{{ artist.company.contact_email }}">{{ artist.company.contact_email }}</a></span>{% endif %}</div>
+  </div>
+  <div class="row">
+    <button class="btn" data-open="dlg-admin">{% icon "edit" %}Edit</button>
+    <button class="btn btn-primary" data-open="dlg-advancing">{% icon "file" %}Edit advancing</button>
+  </div>
+</div>
+
+<div class="split">
+  <div>
+    <section class="card">
+      <div class="card-head"><h2>Performances</h2><button class="btn btn-sm" data-open="dlg-performance"{% if not event.stages.exists %} disabled title="Create a stage first"{% endif %}>{% icon "plus" %}Schedule</button></div>
+      {% if performances %}
+      <ul class="list">{% for p in performances %}
+        <li>{% dot p.stage %}<span class="grow"><b>{{ p.day.title }}</b> · {{ p.start|time:"H:i" }}–{{ p.end|time:"H:i" }} <span class="muted">on {{ p.stage }}</span>{% if p.changeover_minutes %}<span class="muted small"> · {{ p.changeover_minutes }} min changeover</span>{% endif %}</span>
+          <form method="post" class="inline">{% csrf_token %}<input type="hidden" name="item" value="{{ p.pk }}" /><button class="btn btn-sm btn-ghost btn-icon btn-danger" name="action" value="performance_delete" title="Remove">{% icon "trash" %}</button></form></li>
+      {% endfor %}</ul>
+      {% else %}<p class="empty-inline">Not scheduled yet.{% if not event.stages.exists %} <a class="link" href="{% url 'stages' event.slug %}">Create a stage</a> first.{% endif %}</p>{% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Advancing</h2>{% status artist "advancing_status" %}</div>
+      <div class="card-body">{% include "artists/_advancing.html" %}</div>
+    </section>
+
+    {% include "artists/_requests.html" %}
+  </div>
+
+  <aside>
+    <section class="card">
+      <div class="card-head"><h2>Advancing portal</h2></div>
+      <div class="card-body">
+        <p class="small muted" style="margin-bottom:.75rem">The tour manager fills in advancing, requests transport and hotel, and registers the party here.</p>
+        {% include "components/copy.html" with id="portal" value=portal_link %}
+        <a class="link small" style="display:inline-block;margin-top:.6rem" href="{{ artist.company.get_absolute_url }}">Manage contact &amp; send link →</a>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>Party</h2><a class="btn btn-sm" href="{% url 'person_create' event.slug %}?company={{ artist.company.pk }}">{% icon "plus" %}Add</a></div>
+      <div class="card-body" style="padding-bottom:.5rem">{% include "accreditation/_usage.html" %}
+        {% if not usage %}<p class="small"><a class="link" href="{{ artist.company.get_absolute_url }}">Set a contingent</a> so they can register their own crew.</p>{% endif %}</div>
+      {% if party %}
+      <ul class="list">{% for p in party %}<li><span class="avatar" style="--c:{{ p.type.color }};--t:{{ p.type.color|text_on }};width:28px;height:28px">{{ p.initials }}</span><a class="title grow small" href="{{ p.get_absolute_url }}">{{ p.full_name }}</a>{% status p %}</li>{% endfor %}</ul>
+      {% endif %}
+    </section>
+    {% if artist.internal_notes %}<section class="card"><div class="card-head"><h2>Internal notes</h2></div><div class="card-body small">{{ artist.internal_notes|linebreaksbr }}</div></section>{% endif %}
+    <form method="post" class="card card-body row" style="justify-content:flex-end">{% csrf_token %}<button class="btn btn-sm btn-danger" name="action" value="delete" data-confirm="Delete {{ artist.name }} with all performances and requests?">{% icon "trash" %}Delete artist</button></form>
+  </aside>
+</div>
+
+{% include "components/dialog.html" with id="dlg-admin" title="Edit artist" form=forms.admin action="admin" %}
+{% include "components/dialog.html" with id="dlg-advancing" title="Advancing" form=forms.advancing action="advancing" multipart=True wide=True %}
+{% include "components/dialog.html" with id="dlg-performance" title="Schedule performance" form=forms.performance action="performance" submit="Add" %}
+{% include "components/dialog.html" with id="dlg-transport" title="Add transport" form=forms.transport action="transport" submit="Add" %}
+{% include "components/dialog.html" with id="dlg-room" title="Add hotel room" form=forms.room action="room" submit="Add" %}
+{% endblock %}

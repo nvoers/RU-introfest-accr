@@ -1,0 +1,52 @@
+{% extends "portal/public.html" %}
+{% block title %}{{ acc.full_name }}{% endblock %}
+{% block head %}<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" defer></script><script src="{% static 'core/qr.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="card ticket">
+  <div class="ticket-top" style="--c:{{ acc.type.color }};--t:{{ acc.type.color|text_on }}">
+    <small>{{ acc.type.name }}</small>
+    <h1>{{ acc.full_name }}</h1>
+    <div style="opacity:.85;margin-top:.2rem">{{ acc.company.name|default:"" }}{% if acc.role %}{% if acc.company %} · {% endif %}{{ acc.role }}{% endif %}</div>
+  </div>
+  {% if acc.is_approved %}
+  <div class="ticket-qr">
+    <div class="qr" data-qr="{{ acc.token }}" aria-label="QR code"></div>
+    <code>{{ acc.token }}</code>
+    <p class="small muted" style="margin-top:.5rem">Show this code at the accreditation desk.</p>
+  </div>
+  {% else %}
+  <div class="ticket-status">
+    {% status acc %}
+    <p class="muted" style="margin-top:.75rem">{% if acc.status == "pending" %}Your request is being reviewed. You'll get an e-mail once it's approved – bookmark this page.{% elif acc.status == "rejected" %}This request was not approved.{% if acc.rejection_reason %} {{ acc.rejection_reason }}{% endif %}{% elif acc.status == "cancelled" %}This accreditation has been cancelled.{% else %}This request hasn't been submitted yet.{% endif %}</p>
+  </div>
+  {% endif %}
+  <div class="card-body">
+    <dl class="kv" style="grid-template-columns:80px 1fr">
+      <dt>Zones</dt><dd class="tags">{% for z in zones %}{% pill z %}{% empty %}—{% endfor %}</dd>
+      <dt>Days</dt><dd>{% for d in days %}{{ d.short }}{% if not forloop.last %}, {% endif %}{% endfor %}</dd>
+      {% if handouts %}<dt>Pick up</dt><dd>{% for h in handouts %}{{ h.quantity }}× {{ h.item.name }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</dd>{% endif %}
+    </dl>
+  </div>
+</div>
+
+{% if is_crew and acc.is_approved %}
+<section class="card" style="max-width:640px;margin:1.5rem auto 0">
+  <div class="card-head"><h2>My shifts</h2></div>
+  {% if my_shifts %}
+  <ul class="list">{% for a in my_shifts %}
+    <li>{% dot a.shift.team %}<span class="grow"><b>{{ a.shift.team }}</b> · {{ a.shift.day.title }}<br><span class="small muted">{{ a.shift.start|time:"H:i" }}–{{ a.shift.end|time:"H:i" }}{% if a.shift.location %} · {{ a.shift.location }}{% endif %}</span></span>
+      {% if a.self_assigned %}<form method="post" class="inline" data-confirm="Drop this shift?">{% csrf_token %}<input type="hidden" name="assignment" value="{{ a.pk }}" /><button class="btn btn-sm btn-ghost" name="action" value="drop">Drop</button></form>{% endif %}</li>
+  {% endfor %}</ul>
+  {% else %}<p class="empty-inline">No shifts yet – pick some below.</p>{% endif %}
+</section>
+<section class="card" style="max-width:640px;margin:1rem auto 0">
+  <div class="card-head"><h2>Open shifts</h2></div>
+  {% if open_shifts %}
+  <ul class="list">{% for s in open_shifts %}
+    <li>{% dot s.team %}<span class="grow"><b>{{ s.team }}</b> · {{ s.day.title }}<br><span class="small muted">{{ s.start|time:"H:i" }}–{{ s.end|time:"H:i" }}{% if s.location %} · {{ s.location }}{% endif %} · {{ s.filled }}/{{ s.capacity }} filled</span></span>
+      <form method="post" class="inline">{% csrf_token %}<input type="hidden" name="shift" value="{{ s.pk }}" /><button class="btn btn-sm btn-primary" name="action" value="claim">Sign up</button></form></li>
+  {% endfor %}</ul>
+  {% else %}<p class="empty-inline">No open shifts match your preferences right now.</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

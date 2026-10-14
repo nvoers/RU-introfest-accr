@@ -1,0 +1,18 @@
+{% extends "app.html" %}
+{% block title %}Stages{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Stages</h1><p>Columns in the timetable.</p></div>
+  <button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New stage</button>
+</div>
+<section class="card">
+  {% if rows %}
+  <ul class="list">{% for row in rows %}{% with obj=row.obj %}
+    <li>{% pill obj %}<span class="grow"></span><span class="muted small">{{ obj.n }} performance{{ obj.n|pluralize }}</span>{% include "components/row_actions.html" %}</li>
+  {% endwith %}{% endfor %}</ul>
+  {% else %}
+  <div class="empty">{% icon "stage" %}<h3>No stages yet</h3><p>e.g. Main stage, Tent, Club.</p><button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New stage</button></div>
+  {% endif %}
+</section>
+{% include "components/crud_dialogs.html" %}
+{% endblock %}

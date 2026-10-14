@@ -1,0 +1,25 @@
+{% comment %}Transport + hotel request lists. with: transports rooms editable(organiser) portal(bool){% endcomment %}
+<section class="card">
+  <div class="card-head"><h2>Transport</h2><button class="btn btn-sm" type="button" data-open="dlg-transport">{% icon "plus" %}{% if portal %}Request{% else %}Add{% endif %}</button></div>
+  {% if transports %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>When</th><th>Route</th><th class="num">Pax</th><th>Status</th><th class="actions"></th></tr></thead>
+    <tbody>{% for t in transports %}
+      <tr><td class="nowrap">{{ t.day.short }} {{ t.time|time:"H:i" }}</td><td>{{ t.pickup }} → {{ t.dropoff }}{% if t.notes %}<span class="sub">{{ t.notes }}</span>{% endif %}</td><td class="num">{{ t.passengers }}</td><td>{% status t %}</td>
+      <td class="actions">{% include "artists/_request_actions.html" with obj=t kind="transport" %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="empty-inline">No transport {% if portal %}requested{% else %}planned{% endif %}.</p>{% endif %}
+</section>
+<section class="card">
+  <div class="card-head"><h2>Hotel</h2><button class="btn btn-sm" type="button" data-open="dlg-room">{% icon "plus" %}{% if portal %}Request{% else %}Add{% endif %}</button></div>
+  {% if rooms %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Dates</th><th>Room</th><th>Guests</th><th>Status</th><th class="actions"></th></tr></thead>
+    <tbody>{% for r in rooms %}
+      <tr><td class="nowrap">{{ r.check_in|date:"D j M" }} → {{ r.check_out|date:"D j M" }}<span class="sub">{{ r.nights }} night{{ r.nights|pluralize }}</span></td><td>{{ r.get_room_type_display }}{% if r.hotel %}<span class="sub">{{ r.hotel }}</span>{% endif %}</td><td class="small">{{ r.guests }}</td><td>{% status r %}</td>
+      <td class="actions">{% include "artists/_request_actions.html" with obj=r kind="room" %}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="empty-inline">No rooms {% if portal %}requested{% else %}booked{% endif %}.</p>{% endif %}
+</section>

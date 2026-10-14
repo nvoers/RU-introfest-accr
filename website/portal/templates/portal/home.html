@@ -1,0 +1,97 @@
+{% extends "portal/public.html" %}
+{% block title %}{{ company.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles">
+    <h1>{{ company.name }}</h1>
+    <p>{% if artist %}Advancing and accreditation for your show at {{ event.name }}.{% else %}Register the people you bring to {{ event.name }}.{% endif %} Requests are reviewed by the organisation; approved people get an e-ticket by e-mail.</p>
+  </div>
+</div>
+
+{% if artist %}
+<nav class="tabs">
+  <a href="?tab=people"{% if tab == "people" %} aria-current="page"{% endif %}>{% icon "users" %}Party &amp; guests</a>
+  <a href="?tab=advancing"{% if tab == "advancing" %} aria-current="page"{% endif %}>{% icon "file" %}Advancing</a>
+  <a href="?tab=logistics"{% if tab == "logistics" %} aria-current="page"{% endif %}>{% icon "truck" %}Transport &amp; hotel</a>
+</nav>
+{% endif %}
+
+{% if tab == "people" %}
+<div class="split">
+  <div>
+    {% if drafts %}
+    <div class="callout warning" style="margin-bottom:1rem;align-items:center">{% icon "info" %}<div class="grow"><b>{{ drafts }} draft{{ drafts|pluralize }} not submitted yet.</b> <p>Submit when your list is complete.</p></div>
+      <form method="post">{% csrf_token %}<button class="btn btn-primary" name="action" value="submit">{% icon "send" %}Submit {{ drafts }} request{{ drafts|pluralize }}</button></form></div>
+    {% endif %}
+    <section class="card">
+      <div class="card-head"><h2>Your people</h2><button class="btn btn-sm btn-primary" data-open="dlg-person"{% if not can_add %} disabled title="Your contingent is full"{% endif %}>{% icon "user-plus" %}Add person</button></div>
+      {% if people %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Name</th><th>Credential</th><th>Status</th><th class="actions"></th></tr></thead>
+        <tbody>{% for p in people %}
+          <tr>
+            <td><b>{{ p.full_name }}</b><span class="sub">{{ p.role|default:p.email }}</span></td>
+            <td>{% pill p.type %}</td>
+            <td>{% status p %}{% if p.status == "rejected" and p.rejection_reason %}<span class="sub">{{ p.rejection_reason }}</span>{% endif %}</td>
+            <td class="actions">
+              {% if p.is_editable_by_partner %}<a class="btn btn-sm btn-ghost btn-icon" href="?tab=people&edit={{ p.pk }}" title="Edit">{% icon "edit" %}</a>{% endif %}
+              {% if p.is_approved %}<a class="btn btn-sm" href="{{ p.ticket_url }}" target="_blank">{% icon "ticket" %}Ticket</a>{% endif %}
+              {% if p.status == "draft" or p.status == "rejected" or p.status == "pending" %}
+              <form method="post" class="inline" data-confirm="Remove {{ p.full_name }}?">{% csrf_token %}<input type="hidden" name="item" value="{{ p.pk }}" /><button class="btn btn-sm btn-ghost btn-icon btn-danger" name="action" value="delete" title="Remove">{% icon "trash" %}</button></form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="empty">{% icon "users" %}<h3>No one added yet</h3><p>Add everyone who needs access, then submit your list.</p>{% if can_add %}<button class="btn btn-primary" data-open="dlg-person">{% icon "user-plus" %}Add person</button>{% endif %}</div>{% endif %}
+    </section>
+  </div>
+  <aside>
+    <section class="card">
+      <div class="card-head"><h2>Your contingent</h2></div>
+      <div class="card-body">{% include "accreditation/_usage.html" %}</div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>How it works</h2></div>
+      <ol class="card-body small muted" style="margin:0;padding-left:2.2rem">
+        <li>Add each person with their own e-mail address.</li>
+        <li>Submit your list – you can still add people later.</li>
+        <li>We review the requests.</li>
+        <li>Everyone approved receives a personal QR e-ticket.</li>
+      </ol>
+    </section>
+  </aside>
+</div>
+{% include "components/dialog.html" with id="dlg-person" title=editing|yesno:"Edit person,Add person" form=forms.person action="person" submit="Save draft" action_url=person_action %}
+{% endif %}
+
+{% if tab == "advancing" %}
+<div class="split">
+  <form method="post" enctype="multipart/form-data" class="card">
+    {% csrf_token %}<input type="hidden" name="action" value="advancing" />
+    <div class="card-head"><h2>Advancing sheet</h2>{% status artist "advancing_status" %}</div>
+    <div class="card-body">
+      {% include "components/form.html" with form=forms.advancing %}
+      {% if artist.rider_file %}<p class="small" style="margin-top:.5rem">Current file: <a class="link" href="{{ artist.rider_file.url }}" target="_blank">{{ artist.rider_file.name|cut:"riders/" }}</a></p>{% endif %}
+      <div class="form-actions"><button class="btn">Save draft</button><button class="btn btn-primary" name="submit" value="1">{% icon "send" %}Submit advancing</button></div>
+    </div>
+  </form>
+  <aside>
+    <section class="card">
+      <div class="card-head"><h2>Your show</h2></div>
+      {% if performances %}
+      <ul class="list">{% for p in performances %}<li>{% dot p.stage %}<span class="grow"><b>{{ p.day.title }}</b><br><span class="small muted">{{ p.start|time:"H:i" }}–{{ p.end|time:"H:i" }} · {{ p.stage }}</span></span></li>{% endfor %}</ul>
+      {% else %}<p class="empty-inline">Times will appear here once scheduled.</p>{% endif %}
+    </section>
+  </aside>
+</div>
+{% endif %}
+
+{% if tab == "logistics" %}
+<div style="max-width:860px">
+  <div class="stack">{% include "artists/_requests.html" with portal=True %}</div>
+</div>
+{% include "components/dialog.html" with id="dlg-transport" title="Request transport" form=forms.transport action="transport" submit="Send request" %}
+{% include "components/dialog.html" with id="dlg-room" title="Request hotel room" form=forms.room action="room" submit="Send request" %}
+{% endif %}
+{% endblock %}

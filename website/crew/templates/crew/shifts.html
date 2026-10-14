@@ -1,0 +1,48 @@
+{% extends "app.html" %}
+{% block title %}Shifts{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Shifts</h1><p>Plan shifts per team. Volunteers can claim open shifts from their personal page.</p></div>
+  <button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New shift</button>
+</div>
+<section class="card">
+  <form method="get" class="filters" data-autosubmit>
+    <select class="input" name="team" aria-label="Team"><option value="">All teams</option>{% for t in event.teams.all %}<option value="{{ t.pk }}"{% if team_id == t.pk|stringformat:"s" %} selected{% endif %}>{{ t.name }}</option>{% endfor %}</select>
+    <select class="input" name="day" aria-label="Day"><option value="">All days</option>{% for d in event.days.all %}<option value="{{ d.pk }}"{% if day_id == d.pk|stringformat:"s" %} selected{% endif %}>{{ d.title }}</option>{% endfor %}</select>
+    {% if team_id or day_id %}<a class="btn btn-ghost" href="{% url 'shifts' event.slug %}">Clear</a>{% endif %}
+  </form>
+  {% if rows %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>When</th><th>Team</th><th class="hide-sm">Location</th><th>Filled</th><th>People</th><th class="actions"></th></tr></thead>
+    <tbody>{% for row in rows %}{% with obj=row.obj %}{% with n=obj.assignments.all|length %}
+      <tr>
+        <td class="nowrap"><b>{{ obj.day.short }}</b> {{ obj.start|time:"H:i" }}–{{ obj.end|time:"H:i" }}<span class="sub">{{ obj.hours }} h{% if not obj.open_for_signup %} · invite only{% endif %}</span></td>
+        <td>{% pill obj.team %}</td>
+        <td class="hide-sm small">{{ obj.location|default:"—" }}</td>
+        <td style="min-width:90px"><span class="small"><b>{{ n }}</b> / {{ obj.capacity }}</span><div class="bar{% if n >= obj.capacity %} full{% endif %}" style="height:5px;margin-top:.25rem;--c:var(--success)"><span style="width:{{ n|percent:obj.capacity }}%"></span></div></td>
+        <td><div class="tags">{% for a in obj.assignments.all %}<form method="post" class="inline">{% csrf_token %}<input type="hidden" name="item" value="{{ obj.pk }}" /><input type="hidden" name="assignment" value="{{ a.pk }}" /><span class="badge">{{ a.person.full_name }}<button name="action" value="unassign" style="border:0;background:none;color:inherit;cursor:pointer;padding:0" title="Remove">×</button></span></form>{% endfor %}</div></td>
+        <td class="actions">
+          <button class="btn btn-sm" type="button" data-open="assign-{{ obj.pk }}"{% if n >= obj.capacity %} disabled{% endif %}>{% icon "user-plus" %}</button>
+          {% include "components/row_actions.html" %}
+        </td>
+      </tr>
+    {% endwith %}{% endwith %}{% endfor %}</tbody>
+  </table></div>
+  {% else %}
+  <div class="empty">{% icon "clock" %}<h3>No shifts{% if team_id or day_id %} match{% else %} yet{% endif %}</h3><button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New shift</button></div>
+  {% endif %}
+</section>
+
+{% include "components/crud_dialogs.html" with noun="shift" %}
+{% for row in rows %}
+<dialog id="assign-{{ row.obj.pk }}">
+  <div class="dialog-head"><h2>Assign to {{ row.obj.team }} · {{ row.obj.day.short }} {{ row.obj.start|time:"H:i" }}</h2><button type="button" class="btn btn-ghost btn-sm btn-icon" data-close aria-label="Close">{% icon "x" %}</button></div>
+  <form method="post" class="dialog-body">
+    {% csrf_token %}<input type="hidden" name="action" value="assign" /><input type="hidden" name="item" value="{{ row.obj.pk }}" />
+    <div class="field"><label>Person (approved accreditations)</label>
+      <select name="person" required>{% for p in candidates %}<option value="{{ p.pk }}">{{ p.full_name }} — {{ p.type.name }}{% if p.company %} · {{ p.company.name }}{% endif %}</option>{% endfor %}</select></div>
+    <div class="form-actions"><button type="button" class="btn" data-close>Cancel</button><button class="btn btn-primary">Assign</button></div>
+  </form>
+</dialog>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "app.html" %}
+{% block title %}{{ company.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles">
+    <div class="crumbs"><a href="{% url 'companies' event.slug %}">Companies</a><span>/</span></div>
+    <h1>{{ company.name }}</h1>
+    <div class="meta"><span class="badge">{{ company.get_kind_display }}</span>{% if company.contact_name %}<span>{% icon "users" %}{{ company.contact_name }}</span>{% endif %}{% if company.contact_email %}<span>{% icon "mail" %}<a class="link" href="mailto:{{ company.contact_email }}">{{ company.contact_email }}</a></span>{% endif %}{% if company.contact_phone %}<span>{{ company.contact_phone }}</span>{% endif %}</div>
+  </div>
+  <div class="row">
+    {% if company.artist %}<a class="btn" href="{{ company.artist.get_absolute_url }}">{% icon "mic" %}Artist page</a>{% endif %}
+    <button class="btn" data-open="dlg-edit">{% icon "edit" %}Edit</button>
+    <a class="btn btn-primary" href="{% url 'person_create' event.slug %}?company={{ company.pk }}">{% icon "user-plus" %}Add person</a>
+  </div>
+</div>
+
+<div class="split">
+  <div>
+    <section class="card">
+      <div class="card-head"><h2>People</h2><span class="muted small">{{ people|length }}</span></div>
+      {% if people %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Name</th><th>Credential</th><th>Status</th></tr></thead>
+        <tbody>{% for p in people %}
+          <tr><td><div class="who"><span class="avatar" style="--c:{{ p.type.color }};--t:{{ p.type.color|text_on }}">{{ p.initials }}</span><div><a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a><span class="sub">{{ p.role }}</span></div></div></td><td>{% pill p.type %}</td><td>{% status p %}</td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}<p class="empty-inline">Nobody requested yet. Share the portal link →</p>{% endif %}
+    </section>
+    {% if company.notes %}<section class="card"><div class="card-head"><h2>Notes</h2></div><div class="card-body">{{ company.notes|linebreaksbr }}</div></section>{% endif %}
+  </div>
+
+  <aside>
+    <section class="card">
+      <div class="card-head"><h2>Portal link</h2>{% if company.portal_enabled %}<span class="badge tone-success">Open</span>{% else %}<span class="badge">Closed</span>{% endif %}</div>
+      <div class="card-body">
+        {% include "components/copy.html" with id="portal" value=portal_link %}
+        <form method="post" class="row" style="margin-top:.75rem">
+          {% csrf_token %}
+          <button class="btn btn-sm" name="action" value="invite"{% if not company.contact_email %} disabled title="Add a contact e-mail first"{% endif %}>{% icon "send" %}E-mail link</button>
+          <button class="btn btn-sm btn-ghost" name="action" value="reset_token" data-confirm="Generate a new link? The old link stops working.">{% icon "refresh" %}New link</button>
+        </form>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>Contingent</h2></div>
+      <div class="card-body">{% include "accreditation/_usage.html" %}</div>
+      <form method="post" class="card-foot">
+        {% csrf_token %}<input type="hidden" name="action" value="contingents" />
+        <div class="qty-grid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))">{% for field in contingents %}{% include "components/field.html" %}{% empty %}<p>Create <a class="link" href="{% url 'types' event.slug %}">credentials</a> first.</p>{% endfor %}</div>
+        {% if contingents.fields %}<div class="form-actions" style="margin-top:.75rem"><button class="btn btn-sm btn-primary">Save contingent</button></div>{% endif %}
+      </form>
+    </section>
+    {% if not company.artist %}
+    <form method="post" class="card card-body row" style="justify-content:flex-end">{% csrf_token %}<button class="btn btn-sm btn-danger" name="action" value="delete" data-confirm="Delete {{ company.name }}? Its people are kept without a company.">{% icon "trash" %}Delete company</button></form>
+    {% endif %}
+  </aside>
+</div>
+{% include "components/dialog.html" with id="dlg-edit" title="Edit company" form=form action="edit" %}
+{% endblock %}

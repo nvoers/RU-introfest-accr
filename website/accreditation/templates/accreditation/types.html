@@ -1,0 +1,32 @@
+{% extends "app.html" %}
+{% block title %}Credentials{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Credentials</h1><p>Accreditation types like Artist, Crew, Press or Guest – each with its zones and default items.</p></div>
+  <button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New credential</button>
+</div>
+{% if rows %}
+<div class="grid cols-3">
+  {% for row in rows %}{% with obj=row.obj %}
+  <section class="card">
+    <div class="card-head plain">{% pill obj "lg" %}<span class="grow"></span>{% include "components/row_actions.html" with warn="Credentials in use can't be deleted." %}</div>
+    <div class="card-body">
+      <dl class="kv" style="grid-template-columns:90px 1fr">
+        <dt>Zones</dt><dd class="tags">{% for z in obj.zones.all %}{% pill z %}{% empty %}<span class="faint">None</span>{% endfor %}</dd>
+        <dt>Items</dt><dd class="small">{% for d in obj.default_items.all %}{{ d.quantity }}× {{ d.item.name }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="faint">None</span>{% endfor %}</dd>
+        <dt>Approval</dt><dd class="small">{% if obj.requires_approval %}Required for portal requests{% else %}<span class="badge tone-info">Auto-approve</span>{% endif %}</dd>
+        <dt>People</dt><dd class="small">{{ obj.n }}</dd>
+      </dl>
+    </div>
+  </section>
+  {% endwith %}{% endfor %}
+</div>
+{% else %}
+<section class="card empty">{% icon "badge" %}<h3>No credentials yet</h3><p>Create zones first, then credentials that combine them.</p><button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New credential</button></section>
+{% endif %}
+
+{% include "components/dialog.html" with id="dlg-new" title="New credential" form=new_form submit="Add" body_template="accreditation/_type_form.html" wide=True %}
+{% for row in rows %}{% with pk=row.obj.pk|stringformat:"s" %}
+{% include "components/dialog.html" with id="dlg-"|add:pk title="Edit credential" form=row.form item=pk body_template="accreditation/_type_form.html" wide=True %}
+{% endwith %}{% endfor %}
+{% endblock %}

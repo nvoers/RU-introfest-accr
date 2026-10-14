@@ -1,0 +1,40 @@
+{% extends "app.html" %}
+{% block title %}Approvals{% endblock %}
+{% block content %}
+<div class="page-head"><div class="titles"><h1>Approvals</h1><p>Requests submitted through partner portals and the volunteer form. Approving e-mails the e-ticket.</p></div></div>
+
+{% if total %}
+<form method="post" data-bulk>
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+  {% for company, people in groups %}
+  <section class="card" style="margin-bottom:1rem">
+    <div class="card-head">
+      {% icon "building" %}
+      <h2>{% if company %}<a href="{{ company.get_absolute_url }}" style="text-decoration:none">{{ company.name }}</a> <span class="badge">{{ company.get_kind_display }}</span>{% else %}No company{% endif %}</h2>
+      <span class="muted small">{{ people|length }} waiting</span>
+    </div>
+    {% if company %}{% with u=usage|get:company.pk %}{% if u %}<div class="card-body" style="padding-bottom:.4rem">{% include "accreditation/_usage.html" with usage=u %}</div>{% endif %}{% endwith %}{% endif %}
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th class="check"><input type="checkbox" data-check-all aria-label="Select all" /></th><th>Name</th><th>Credential</th><th class="hide-sm">Days</th><th class="hide-sm">Submitted</th><th class="actions"></th></tr></thead>
+      <tbody>
+        {% for p in people %}
+        <tr>
+          <td class="check"><input type="checkbox" name="ids" value="{{ p.pk }}" aria-label="Select {{ p.full_name }}" /></td>
+          <td><div class="who"><span class="avatar" style="--c:{{ p.type.color }};--t:{{ p.type.color|text_on }}">{{ p.initials }}</span><div><a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a><span class="sub">{{ p.role|default:p.email }}</span></div></div></td>
+          <td>{% pill p.type %}</td>
+          <td class="hide-sm small">{% with d=p.days.all %}{% if d %}{% for day in d %}{{ day.date|date:"D" }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}All{% endif %}{% endwith %}</td>
+          <td class="hide-sm small muted">{{ p.submitted_at|timesince }} ago</td>
+          <td class="actions"><button class="btn btn-sm btn-success" name="single" value="{{ p.pk }}">{% icon "check" %}Approve</button></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+  {% endfor %}
+  {% include "accreditation/_bulkbar.html" with approvals_only=True %}
+</form>
+{% else %}
+<section class="card empty">{% icon "inbox" %}<h3>Nothing to review</h3><p>New requests from partners and volunteers appear here.</p><a class="btn" href="{% url 'companies' event.slug %}">Invite companies</a></section>
+{% endif %}
+{% endblock %}

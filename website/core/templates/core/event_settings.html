@@ -1,0 +1,29 @@
+{% extends "app.html" %}
+{% block title %}Event settings{% endblock %}
+{% block content %}
+<div class="page-head"><div class="titles"><h1>Event settings</h1><p>Name, dates and day labels.</p></div></div>
+<form method="post" style="max-width:820px">
+  {% csrf_token %}
+  <section class="card">
+    <div class="card-head"><h2>Details</h2></div>
+    <div class="card-body">{% include "components/form.html" %}</div>
+  </section>
+  <section class="card mt">
+    <div class="card-head"><h2>Days</h2><span class="muted small">Change the date range above to add or remove days.</span></div>
+    {{ days.management_form }}
+    <ul class="list">
+      {% for f in days %}
+      <li>{{ f.id }}<span style="width:120px;font-weight:600">{{ f.instance.short }}</span><div class="grow field">{{ f.label }}</div></li>
+      {% endfor %}
+    </ul>
+  </section>
+  <div class="form-actions"><button class="btn btn-primary">Save changes</button></div>
+</form>
+
+<form method="post" action="{% url 'event_delete' event.slug %}" class="card card-body mt-lg" style="max-width:820px;border-color:var(--danger)">
+  {% csrf_token %}
+  <h2 style="color:var(--danger)">Delete event</h2>
+  <p class="muted small" style="margin:.3rem 0 1rem">Removes the event with all people, companies, artists and shifts. Type <b>{{ event.name }}</b> to confirm.</p>
+  <div class="row"><input class="input" name="confirm" placeholder="{{ event.name }}" autocomplete="off" style="flex:1;min-width:200px" required /><button class="btn btn-danger solid">{% icon "trash" %}Delete event</button></div>
+</form>
+{% endblock %}

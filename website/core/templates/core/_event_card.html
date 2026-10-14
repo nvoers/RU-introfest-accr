@@ -1,0 +1,18 @@
+<a class="card event-card" href="{% url 'dashboard' event.slug %}">
+  <div class="row nowrap" style="--gap:.9rem;align-items:flex-start">
+    <span class="date"><b>{{ event.start_date|date:"j" }}</b><span>{{ event.start_date|date:"M" }}</span></span>
+    <div class="grow">
+      <h2>{{ event.name }}</h2>
+      <div class="meta" style="margin-top:.2rem">
+        <span>{% icon "calendar" %}{{ event.start_date|date:"j M" }}{% if event.end_date != event.start_date %} – {{ event.end_date|date:"j M Y" }}{% else %} {{ event.start_date|date:"Y" }}{% endif %}</span>
+        {% if event.venue %}<span>{% icon "pin" %}{{ event.venue }}</span>{% endif %}
+      </div>
+    </div>
+    {% if event.is_live %}<span class="badge tone-success">Live</span>{% endif %}
+  </div>
+  <div class="nums">
+    <div><b>{{ event.people }}</b>accredited</div>
+    <div><b>{{ event.pending }}</b>pending</div>
+    <div><b>{{ event.artist_count }}</b>artists</div>
+  </div>
+</a>

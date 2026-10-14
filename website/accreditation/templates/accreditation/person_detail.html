@@ -1,0 +1,133 @@
+{% extends "app.html" %}
+{% block title %}{{ person.full_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles">
+    <div class="crumbs"><a href="{% url 'people' event.slug %}">People</a><span>/</span></div>
+    <div class="row nowrap" style="--gap:.9rem">
+      <span class="avatar lg" style="--c:{{ person.type.color }};--t:{{ person.type.color|text_on }}">{{ person.initials }}</span>
+      <div><h1>{{ person.full_name }}</h1>
+        <div class="meta" style="margin-top:.25rem">{% status person %}{% if person.role %}<span>{{ person.role }}</span>{% endif %}{% if person.company %}<span>{% icon "building" %}<a class="link" href="{{ person.company.get_absolute_url }}">{{ person.company }}</a></span>{% endif %}{% if person.is_inside %}<span class="badge tone-success">On site</span>{% endif %}</div>
+      </div>
+    </div>
+  </div>
+  <form method="post" class="row">
+    {% csrf_token %}
+    {% if person.status == "pending" or person.status == "draft" %}
+      <button class="btn" type="button" data-open="dlg-reject">{% icon "x" %}Reject</button>
+      <button class="btn btn-success" name="action" value="approve">{% icon "check" %}Approve</button>
+    {% elif person.status == "approved" %}
+      {% if person.is_inside %}<button class="btn" name="action" value="check_out">{% icon "undo" %}Check out</button>{% else %}<button class="btn btn-success" name="action" value="check_in">{% icon "check" %}Check in</button>{% endif %}
+      <button class="btn" name="action" value="send"{% if not person.email %} disabled title="No e-mail address"{% endif %}>{% icon "send" %}E-mail ticket</button>
+    {% else %}
+      <button class="btn" name="action" value="restore">{% icon "undo" %}Back to pending</button>
+    {% endif %}
+    <a class="btn btn-primary" href="{% url 'person_edit' event.slug person.pk %}">{% icon "edit" %}Edit</a>
+  </form>
+</div>
+
+{% if person.status == "rejected" and person.rejection_reason %}
+<div class="callout warning" style="margin-bottom:1.25rem">{% icon "alert" %}<div><b>Rejected:</b> {{ person.rejection_reason }}</div></div>
+{% endif %}
+
+<div class="split">
+  <div>
+    <section class="card">
+      <div class="card-head"><h2>Credential</h2>{% pill person.type "lg" %}</div>
+      <div class="card-body">
+        <dl class="kv">
+          <dt>Zones</dt><dd class="tags">{% for z in zones %}{% pill z %}{% empty %}<span class="faint">No zones</span>{% endfor %}</dd>
+          <dt>Days</dt><dd>{% with d=person.days.all %}{% if d %}{% for day in d %}{{ day.short }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}All days{% endif %}{% endwith %}</dd>
+          <dt>E-mail</dt><dd>{% if person.email %}<a class="link" href="mailto:{{ person.email }}">{{ person.email }}</a>{% else %}—{% endif %}</dd>
+          <dt>Phone</dt><dd>{% if person.phone %}<a class="link" href="tel:{{ person.phone }}">{{ person.phone }}</a>{% else %}—{% endif %}</dd>
+          {% if person.notes %}<dt>Notes</dt><dd>{{ person.notes|linebreaksbr }}</dd>{% endif %}
+          <dt>Ticket</dt><dd>{% if person.is_approved %}<a class="link" href="{{ person.ticket_url }}" target="_blank">Open e-ticket</a>{% if person.ticket_sent_at %} <span class="muted small">· e-mailed {{ person.ticket_sent_at|date:"j M H:i" }}</span>{% endif %}{% else %}<span class="muted">Available once approved</span>{% endif %}</dd>
+        </dl>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Items</h2></div>
+      {% if handouts %}
+      <ul class="list">
+        {% for h in handouts %}
+        <li>
+          <span class="grow"><b>{{ h.quantity }}× {{ h.item.name }}</b> <span class="muted small">{{ h.item.get_kind_display }}</span></span>
+          <form method="post" class="inline">{% csrf_token %}<input type="hidden" name="handout" value="{{ h.pk }}" />
+            <button class="btn btn-sm{% if not h.is_issued %} btn-success{% endif %}" name="action" value="item_toggle">{% if h.is_issued %}{% icon "check" %}Issued {{ h.issued_at|date:"j M H:i" }}{% else %}Mark issued{% endif %}</button>
+            <button class="btn btn-sm btn-ghost btn-icon btn-danger" name="action" value="item_remove" title="Remove">{% icon "x" %}</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty-inline">No items allocated.</p>{% endif %}
+      {% if available_items %}
+      <form method="post" class="card-foot row nowrap">
+        {% csrf_token %}<input type="hidden" name="action" value="item_add" />
+        <select class="input" name="item" aria-label="Item">{% for i in available_items %}<option value="{{ i.pk }}">{{ i.name }}</option>{% endfor %}</select>
+        <input class="input" type="number" name="quantity" value="1" min="1" style="width:80px" aria-label="Quantity" />
+        <button class="btn">{% icon "plus" %}Add</button>
+      </form>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Scan history</h2></div>
+      {% if scans %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Time</th><th>Where</th><th>Direction</th><th>Result</th></tr></thead>
+        <tbody>{% for s in scans %}
+          <tr><td class="nowrap">{{ s.created_at|date:"D j M H:i" }}</td><td>{{ s.zone.name|default:"Entrance" }}</td><td>{{ s.get_direction_display }}</td>
+          <td><span class="badge tone-{% if s.result == 'ok' %}success{% elif s.result == 'warning' %}warning{% else %}danger{% endif %}">{{ s.get_result_display }}</span> <span class="small muted">{{ s.message }}</span></td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}<p class="empty-inline">Not scanned yet.</p>{% endif %}
+    </section>
+  </div>
+
+  <aside>
+    {% if person.is_approved %}
+    <section class="card">
+      <div class="card-head"><h2>E-ticket</h2></div>
+      <div class="card-body" style="text-align:center">
+        <div class="qr" data-qr="{{ person.token }}" style="width:170px;height:170px;margin:0 auto;background:#fff;padding:8px;border-radius:10px"></div>
+        <p class="small muted" style="margin-top:.6rem">Scan at the entrance or check in manually.</p>
+      </div>
+    </section>
+    {% endif %}
+    {% if shifts %}
+    <section class="card">
+      <div class="card-head"><h2>Shifts</h2></div>
+      <ul class="list">{% for a in shifts %}<li>{% dot a.shift.team %}<span class="grow small"><b>{{ a.shift.team }}</b><br><span class="muted">{{ a.shift.day }} · {{ a.shift.start|time:"H:i" }}–{{ a.shift.end|time:"H:i" }}</span></span></li>{% endfor %}</ul>
+    </section>
+    {% endif %}
+    <section class="card">
+      <div class="card-head"><h2>History</h2></div>
+      <div class="card-body small">
+        <dl class="kv" style="grid-template-columns:100px 1fr">
+          <dt>Created</dt><dd>{{ person.created_at|date:"j M Y H:i" }}</dd>
+          {% if person.submitted_at %}<dt>Submitted</dt><dd>{{ person.submitted_at|date:"j M Y H:i" }}</dd>{% endif %}
+          {% if person.decided_at %}<dt>Decided</dt><dd>{{ person.decided_at|date:"j M Y H:i" }}{% if person.decided_by %} by {{ person.decided_by }}{% endif %}</dd>{% endif %}
+          {% if person.first_check_in_at %}<dt>First in</dt><dd>{{ person.first_check_in_at|date:"j M H:i" }}</dd>{% endif %}
+        </dl>
+      </div>
+    </section>
+    <form method="post" class="card card-body row" style="justify-content:space-between">
+      {% csrf_token %}
+      {% if person.status != "cancelled" %}<button class="btn btn-sm" name="action" value="cancel" data-confirm="Cancel this accreditation? The ticket stops working.">Cancel accreditation</button>{% endif %}
+      {% if person.is_approved %}<button class="btn btn-sm" name="action" value="reset_token" data-confirm="Generate a new ticket code? The current QR code will stop working.">{% icon "refresh" %}New code</button>{% endif %}
+      <button class="btn btn-sm btn-danger" name="action" value="delete" data-confirm="Delete {{ person.full_name }} permanently?">{% icon "trash" %}Delete</button>
+    </form>
+  </aside>
+</div>
+
+<dialog id="dlg-reject">
+  <div class="dialog-head"><h2>Reject {{ person.first_name }}</h2><button type="button" class="btn btn-ghost btn-sm btn-icon" data-close aria-label="Close">{% icon "x" %}</button></div>
+  <form method="post" class="dialog-body">
+    {% csrf_token %}<input type="hidden" name="action" value="reject" />
+    <div class="field"><label for="reason">Reason (shared with the requester)</label><input id="reason" name="reason" maxlength="300" placeholder="e.g. Contingent exceeded" /></div>
+    <div class="form-actions"><button type="button" class="btn" data-close>Cancel</button><button class="btn btn-danger solid">Reject</button></div>
+  </form>
+</dialog>
+{% endblock %}
+{% block head %}<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js" defer></script><script src="{% static 'core/qr.js' %}" defer></script>{% endblock %}

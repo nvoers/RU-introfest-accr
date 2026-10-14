@@ -1,0 +1,70 @@
+{% extends "app.html" %}
+{% block title %}People{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>People</h1><p>Everyone with an accreditation for this event.</p></div>
+  <div class="row">
+    <a class="btn" href="{% url 'people_export' event.slug %}">{% icon "download" %}Export</a>
+    <a class="btn btn-primary" href="{% url 'person_create' event.slug %}">{% icon "user-plus" %}Add person</a>
+  </div>
+</div>
+
+<nav class="segmented" style="margin-bottom:1rem" aria-label="Status">
+  <a href="{% qs status=None page=None %}"{% if not filters.status %} aria-current="page"{% endif %}>All</a>
+  {% for value, label in statuses.items %}
+  <a href="{% qs status=value page=None %}"{% if filters.status == value %} aria-current="page"{% endif %}>{{ label }}<span class="n">{{ counts|get:value|default:0 }}</span></a>
+  {% endfor %}
+</nav>
+
+<section class="card">
+  <form method="get" class="filters" data-autosubmit>
+    {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}" />{% endif %}
+    <label class="search"><span class="sr-only">Search</span>{% icon "search" %}<input class="input" type="search" name="q" value="{{ filters.q }}" placeholder="Search name, e-mail, company, function…" /></label>
+    <select class="input" name="type" aria-label="Credential"><option value="">All credentials</option>{% for t in event.accreditation_types.all %}<option value="{{ t.pk }}"{% if filters.type == t.pk|stringformat:"s" %} selected{% endif %}>{{ t.name }}</option>{% endfor %}</select>
+    <select class="input" name="company" aria-label="Company"><option value="">All companies</option><option value="none"{% if filters.company == "none" %} selected{% endif %}>No company</option>{% for c in event.companies.all %}<option value="{{ c.pk }}"{% if filters.company == c.pk|stringformat:"s" %} selected{% endif %}>{{ c.name }}</option>{% endfor %}</select>
+    <select class="input" name="inside" aria-label="Check-in"><option value="">Any check-in</option><option value="arrived"{% if filters.inside == "arrived" %} selected{% endif %}>Has arrived</option><option value="yes"{% if filters.inside == "yes" %} selected{% endif %}>On site now</option></select>
+    {% if filtered %}<a class="btn btn-ghost" href="{% url 'people' event.slug %}">Clear</a>{% endif %}
+  </form>
+
+  {% if page.object_list %}
+  <form method="post" data-bulk>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+    <div class="table-wrap"><table class="table">
+      <thead><tr>
+        <th class="check"><input type="checkbox" data-check-all aria-label="Select all" /></th>
+        <th>Name</th><th class="hide-sm">Company</th><th>Credential</th><th class="hide-sm">Days</th><th>Status</th><th class="hide-sm">Check-in</th>
+      </tr></thead>
+      <tbody>
+        {% for p in page.object_list %}
+        <tr>
+          <td class="check"><input type="checkbox" name="ids" value="{{ p.pk }}" aria-label="Select {{ p.full_name }}" /></td>
+          <td><div class="who"><span class="avatar" style="--c:{{ p.type.color }};--t:{{ p.type.color|text_on }}">{{ p.initials }}</span><div><a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a><span class="sub">{{ p.role|default:p.email|default:"" }}</span></div></div></td>
+          <td class="hide-sm">{% if p.company %}<a class="link" style="color:inherit;font-weight:500" href="{{ p.company.get_absolute_url }}">{{ p.company.name }}</a>{% else %}<span class="faint">—</span>{% endif %}</td>
+          <td>{% pill p.type %}</td>
+          <td class="hide-sm small nowrap">{% with days=p.days.all %}{% if days %}{% for d in days %}{{ d.date|date:"D" }}{% if not forloop.last %}, {% endif %}{% endfor %}{% else %}<span class="muted">All days</span>{% endif %}{% endwith %}</td>
+          <td>{% status p %}</td>
+          <td class="hide-sm small">{% if p.is_inside %}<span class="badge tone-success">On site</span>{% elif p.first_check_in_at %}<span class="muted">Left · in {{ p.first_check_in_at|time:"H:i" }}</span>{% else %}<span class="faint">—</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="pager">
+      <span>{{ page.paginator.count }} {% if filtered %}matching{% else %}total{% endif %}</span>
+      {% if page.has_other_pages %}
+      <span class="row">
+        {% if page.has_previous %}<a class="btn btn-sm" href="{% qs page=page.previous_page_number %}">Previous</a>{% endif %}
+        <span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}<a class="btn btn-sm" href="{% qs page=page.next_page_number %}">Next</a>{% endif %}
+      </span>
+      {% endif %}
+    </div>
+    {% include "accreditation/_bulkbar.html" %}
+  </form>
+  {% elif filtered %}
+  <div class="empty">{% icon "search" %}<h3>No matches</h3><p>Try other filters.</p><a class="btn" href="{% url 'people' event.slug %}">Clear filters</a></div>
+  {% else %}
+  <div class="empty">{% icon "users" %}<h3>No one accredited yet</h3><p>Add people yourself, or invite <a class="link" href="{% url 'companies' event.slug %}">companies</a> to request their own.</p><a class="btn btn-primary" href="{% url 'person_create' event.slug %}">{% icon "user-plus" %}Add person</a></div>
+  {% endif %}
+</section>
+{% endblock %}

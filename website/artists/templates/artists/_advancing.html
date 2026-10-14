@@ -1,0 +1,8 @@
+<dl class="kv">
+  <dt>Arrival</dt><dd>{{ artist.arrival|linebreaksbr|default:"—" }}</dd>
+  <dt>Party size</dt><dd>{{ artist.party_size|default:"—" }}</dd>
+  <dt>Dressing room</dt><dd>{{ artist.dressing_room|default:"—" }}</dd>
+  <dt>Technical rider</dt><dd>{{ artist.technical_rider|linebreaksbr|default:"—" }}</dd>
+  <dt>Hospitality rider</dt><dd>{{ artist.hospitality_rider|linebreaksbr|default:"—" }}</dd>
+  <dt>Rider file</dt><dd>{% if artist.rider_file %}<a class="link" href="{{ artist.rider_file.url }}" target="_blank">{% icon "file" %} Download</a>{% else %}—{% endif %}</dd>
+</dl>

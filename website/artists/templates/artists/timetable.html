@@ -1,0 +1,32 @@
+{% extends "app.html" %}
+{% block title %}Timetable{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Timetable</h1></div>
+  <button class="btn no-print" onclick="window.print()">{% icon "printer" %}Print</button>
+</div>
+{% if days %}
+<nav class="tabs no-print">{% for d in days %}<a href="?day={{ d.pk }}"{% if d == day %} aria-current="page"{% endif %}>{{ d.title }}</a>{% endfor %}</nav>
+{% endif %}
+{% if columns %}
+<section class="card" style="overflow:hidden">
+  <div class="tt" style="--cols:{{ columns|length }};--span:{{ span }}">
+    <div class="tt-head"></div>
+    {% for col in columns %}<div class="tt-head">{% dot col.stage %}{{ col.stage.name }}</div>{% endfor %}
+    <div class="tt-hours">{% for top, label in hours %}<span style="top:calc({{ top }} * 1.4px)">{{ label }}</span>{% endfor %}</div>
+    {% for col in columns %}
+    <div class="tt-col">
+      {% for top, label in hours %}<div class="tt-line" style="top:calc({{ top }} * 1.4px)"></div>{% endfor %}
+      {% for b in col.blocks %}
+      <a class="tt-block" href="{{ b.show.artist.get_absolute_url }}" style="--c:{{ col.stage.color }};top:calc({{ b.top }} * 1.4px);height:calc({{ b.height }} * 1.4px - 3px)">
+        <b>{{ b.show.artist.name }}</b><span>{{ b.show.start|time:"H:i" }}–{{ b.show.end|time:"H:i" }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% else %}
+<section class="card empty">{% icon "stage" %}<h3>No stages yet</h3><p>Create stages, then schedule performances from an artist's page.</p><a class="btn btn-primary" href="{% url 'stages' event.slug %}">Create stages</a></section>
+{% endif %}
+{% endblock %}

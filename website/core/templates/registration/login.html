@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block body %}
+<div class="login">
+  <div class="login-art">
+    <div class="brand" style="padding:0"><span class="brand-mark">B</span>Backstage</div>
+    <div>
+      <h1>Everyone in the right place.</h1>
+      <p>Accreditation, partner portals, artist advancing and crew planning for your event — in one place.</p>
+    </div>
+    <ul><li>Accreditation</li><li>Partner portals</li><li>Artist advancing</li><li>Crew shifts</li><li>QR check-in</li></ul>
+  </div>
+  <div class="login-form">
+    <form method="post">
+      {% csrf_token %}
+      <h1 style="font-size:1.5rem">Sign in</h1>
+      <p class="muted" style="margin:0.3rem 0 1.5rem">Organiser account</p>
+      {% if form.errors %}<ul class="errorlist nonfield" style="margin-bottom:1rem"><li>Username and password don't match.</li></ul>{% endif %}
+      <input type="hidden" name="next" value="{{ next }}" />
+      <div class="form-grid one">
+        <div class="field"><label for="id_username">Username</label><input id="id_username" name="username" autocomplete="username" autofocus required value="{{ form.username.value|default:'' }}" /></div>
+        <div class="field"><label for="id_password">Password</label><input id="id_password" type="password" name="password" autocomplete="current-password" required /></div>
+      </div>
+      <button class="btn btn-primary btn-lg" style="width:100%;margin-top:1.4rem">Sign in</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

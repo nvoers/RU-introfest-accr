@@ -1,0 +1,25 @@
+{% extends "app.html" %}
+{% block title %}Teams{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Teams</h1><p>Departments that need hands: Bar, Entrance, Stage crew, Clean-up…</p></div>
+  <button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New team</button>
+</div>
+{% if rows %}
+<div class="grid cols-3">
+  {% for row in rows %}{% with obj=row.obj %}
+  <section class="card">
+    <div class="card-head plain">{% pill obj "lg" %}<span class="grow"></span>{% include "components/row_actions.html" with warn="All its shifts are deleted too." %}</div>
+    <div class="card-body small">
+      {% if obj.lead %}<p><span class="muted">Lead:</span> {{ obj.lead }}</p>{% endif %}
+      {% if obj.description %}<p class="muted" style="margin-top:.3rem">{{ obj.description|truncatechars:140 }}</p>{% endif %}
+      <a class="link" style="display:inline-block;margin-top:.6rem" href="{% url 'shifts' event.slug %}?team={{ obj.pk }}">{{ obj.n }} shift{{ obj.n|pluralize }} →</a>
+    </div>
+  </section>
+  {% endwith %}{% endfor %}
+</div>
+{% else %}
+<section class="card empty">{% icon "flag" %}<h3>No teams yet</h3><p>Create teams, then plan shifts for them.</p><button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New team</button></section>
+{% endif %}
+{% include "components/crud_dialogs.html" %}
+{% endblock %}

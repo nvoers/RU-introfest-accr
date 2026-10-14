@@ -1,0 +1,31 @@
+{% extends "app.html" %}
+{% block title %}Companies{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Companies</h1><p>Partners, suppliers, press and artists. Each gets a contingent and a private portal link to request accreditations.</p></div>
+  <button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New company</button>
+</div>
+<nav class="segmented" style="margin-bottom:1rem">
+  <a href="{% qs kind=None %}"{% if not kind %} aria-current="page"{% endif %}>All</a>
+  {% for value, label in kinds.items %}<a href="{% qs kind=value %}"{% if kind == value %} aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+</nav>
+<section class="card">
+  {% if rows %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Company</th><th class="hide-sm">Contact</th><th>Requested</th><th class="hide-sm">Portal</th><th class="actions"></th></tr></thead>
+    <tbody>{% for row in rows %}{% with c=row.company %}
+      <tr>
+        <td><div class="who"><span class="avatar">{{ c.name|slice:":2"|upper }}</span><div><a href="{{ c.get_absolute_url }}">{{ c.name }}</a><span class="sub">{{ c.get_kind_display }}</span></div></div></td>
+        <td class="hide-sm small">{{ c.contact_name|default:"—" }}{% if c.contact_email %}<span class="sub">{{ c.contact_email }}</span>{% endif %}</td>
+        <td style="min-width:150px"><div class="small"><b>{{ c.n_active }}</b> / {{ row.quota }}{% if c.n_pending %} · <span style="color:var(--warning)">{{ c.n_pending }} pending</span>{% endif %}</div><div class="bar" style="margin-top:.3rem;height:5px"><span style="width:{{ c.n_active|percent:row.quota }}%"></span></div></td>
+        <td class="hide-sm">{% if c.portal_enabled %}<span class="badge tone-success">Open</span>{% else %}<span class="badge">Closed</span>{% endif %}</td>
+        <td class="actions"><a class="btn btn-sm" href="{{ c.get_absolute_url }}">Open</a></td>
+      </tr>
+    {% endwith %}{% endfor %}</tbody>
+  </table></div>
+  {% else %}
+  <div class="empty">{% icon "building" %}<h3>No companies yet</h3><p>Add a partner, give them a contingent, and send them their portal link.</p><button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New company</button></div>
+  {% endif %}
+</section>
+{% include "components/dialog.html" with id="dlg-new" title="New company" form=new_form submit="Create" %}
+{% endblock %}

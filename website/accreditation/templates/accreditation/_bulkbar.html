@@ -1,0 +1,10 @@
+<div class="bulkbar" hidden>
+  <span><b data-selected-count>0</b> selected</span>
+  <button class="btn btn-sm" name="bulk" value="approve">{% icon "check" %}Approve</button>
+  <button class="btn btn-sm" name="bulk" value="reject" data-confirm="Reject the selected requests? They'll get an e-mail.">{% icon "x" %}Reject</button>
+  <button class="btn btn-sm" name="bulk" value="send">{% icon "send" %}E-mail tickets</button>
+  {% if not approvals_only %}
+  <button class="btn btn-sm" name="bulk" value="cancel" data-confirm="Cancel the selected accreditations?">Cancel</button>
+  <button class="btn btn-sm btn-danger" name="bulk" value="delete" data-confirm="Permanently delete the selected people?">{% icon "trash" %}</button>
+  {% endif %}
+</div>

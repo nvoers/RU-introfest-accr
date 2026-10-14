@@ -1,0 +1,30 @@
+{% extends "app.html" %}
+{% block title %}Artists{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Artists</h1><p>Bookings, advancing and the artist's party. Each artist gets a portal to fill in their own advancing.</p></div>
+  <button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New artist</button>
+</div>
+<nav class="segmented" style="margin-bottom:1rem">
+  <a href="{% qs status=None %}"{% if not status %} aria-current="page"{% endif %}>All</a>
+  {% for value, label in statuses.items %}<a href="{% qs status=value %}"{% if status == value %} aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+</nav>
+<section class="card">
+  {% if artists %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Artist</th><th>Performance</th><th>Advancing</th><th class="num hide-sm">Party</th><th class="num hide-sm">Transport</th><th class="num hide-sm">Rooms</th></tr></thead>
+    <tbody>{% for a in artists %}
+      <tr>
+        <td><div class="who"><span class="avatar" style="--c:#2a2350;--t:#c9c3ff">{{ a.name|slice:":2"|upper }}</span><div><a href="{{ a.get_absolute_url }}">{{ a.name }}</a><span class="sub">{{ a.company.contact_name|default:a.agent|default:"" }}</span></div></div></td>
+        <td class="small">{% for p in a.performances.all %}<div class="row nowrap" style="--gap:.4rem">{% dot p.stage %}{{ p.day.short }} · {{ p.start|time:"H:i" }}–{{ p.end|time:"H:i" }} <span class="muted">{{ p.stage }}</span></div>{% empty %}<span class="faint">Not scheduled</span>{% endfor %}</td>
+        <td>{% status a "advancing_status" %}</td>
+        <td class="num hide-sm">{{ a.n_party }}</td><td class="num hide-sm">{{ a.n_transport }}</td><td class="num hide-sm">{{ a.n_rooms }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}
+  <div class="empty">{% icon "mic" %}<h3>No artists{% if status %} with this status{% else %} yet{% endif %}</h3>{% if not status %}<p>Add an artist, schedule the show and send the advancing link to their tour manager.</p><button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New artist</button>{% endif %}</div>
+  {% endif %}
+</section>
+{% include "components/dialog.html" with id="dlg-new" title="New artist" form=new_form submit="Create" %}
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "app.html" %}
+{% block title %}Check-in{% endblock %}
+{% block head %}<script src="{% static 'core/scanner.js' %}" defer></script>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Check-in</h1><p>Scan e-tickets with the camera or a USB scanner, or search by name.</p></div>
+</div>
+
+<div class="scan-layout" id="scanner"
+     data-scan-url="{% url 'scan_api' event.slug %}"
+     data-search-url="{% url 'scan_search' event.slug %}"
+     data-handout-url="{% url 'handout_api' event.slug 0 %}"
+     data-csrf="{{ csrf_token }}">
+  <div>
+    <section class="card card-body">
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <label class="small muted" for="checkpoint">Checkpoint</label>
+          <select class="input" id="checkpoint" style="width:auto;min-width:200px">
+            <option value="">Main entrance (in/out)</option>
+            {% for z in zones %}<option value="{{ z.pk }}">Zone check · {{ z.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="row">
+          <nav class="segmented" id="direction">
+            <a href="#" data-dir="in" aria-current="page">In</a>
+            <a href="#" data-dir="out">Out</a>
+          </nav>
+          <button class="btn" type="button" id="camera-toggle">{% icon "camera" %}Camera</button>
+        </div>
+      </div>
+
+      <div class="search scan-search" style="margin-top:1rem">
+        {% icon "qr" %}
+        <input class="input scan-input" id="code" type="search" autocomplete="off" autofocus placeholder="Scan a ticket or type a name…" />
+      </div>
+      <div class="search-results" id="results"></div>
+
+      <div class="camera" id="camera" hidden><video id="video" playsinline muted></video><div class="frame"></div></div>
+
+      <div id="result" class="result" hidden>
+        <div class="big" id="result-icon"></div>
+        <div>
+          <div class="small muted" id="result-type"></div>
+          <h2 id="result-name"></h2>
+          <div class="msg" id="result-msg"></div>
+          <div class="tags" id="result-zones" style="margin-top:.5rem"></div>
+          <div id="result-items" style="margin-top:.75rem"></div>
+          <a class="link small" id="result-link" href="#" style="display:inline-block;margin-top:.5rem">Open profile →</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <aside>
+    <section class="card stat">
+      <div class="label">Arrived</div>
+      <div class="value"><span id="stat-arrived">{{ stats.arrived }}</span> <small>/ {{ stats.approved }}</small></div>
+      <div class="bar" style="--c:var(--success)"><span style="width:{{ stats.arrived|percent:stats.approved }}%"></span></div>
+      <div class="sub"><span id="stat-inside">{{ stats.inside }}</span> on site now</div>
+    </section>
+    <section class="card mt">
+      <div class="card-head"><h2>Recent scans</h2></div>
+      <ul class="list" id="log">
+        {% for s in recent %}
+        <li><span class="dot" style="--c:{% if s.result == 'ok' %}var(--success){% elif s.result == 'warning' %}var(--warning){% else %}var(--danger){% endif %}"></span>
+          <span class="grow small"><b>{% if s.accreditation %}{{ s.accreditation.full_name }}{% else %}Unknown code{% endif %}</b><br><span class="muted">{{ s.get_direction_display }}{% if s.zone %} · {{ s.zone.name }}{% endif %}{% if s.message %} · {{ s.message }}{% endif %}</span></span>
+          <span class="small faint">{{ s.created_at|time:"H:i" }}</span></li>
+        {% empty %}<li class="muted small" data-empty>No scans yet.</li>{% endfor %}
+      </ul>
+    </section>
+  </aside>
+</div>
+{% endblock %}

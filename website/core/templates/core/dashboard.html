@@ -1,0 +1,114 @@
+{% extends "app.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles">
+    <h1>{{ event.name }}</h1>
+    <div class="meta">
+      <span>{% icon "calendar" %}{{ event.start_date|date:"D j M" }}{% if event.end_date != event.start_date %} – {{ event.end_date|date:"D j M Y" }}{% endif %}</span>
+      {% if event.venue %}<span>{% icon "pin" %}{{ event.venue }}</span>{% endif %}
+      {% if event.is_live %}<span class="badge tone-success">Live now</span>{% endif %}
+    </div>
+  </div>
+  <div class="row">
+    <a class="btn" href="{% url 'scanner' event.slug %}">{% icon "scan" %}Open check-in</a>
+    <a class="btn btn-primary" href="{% url 'person_create' event.slug %}">{% icon "user-plus" %}Add person</a>
+  </div>
+</div>
+
+{% if not event.accreditation_types.exists %}
+<div class="callout warning" style="margin-bottom:1.25rem">{% icon "info" %}<div><b>Finish the setup.</b> <p>Create <a class="link" href="{% url 'zones' event.slug %}">zones</a> and <a class="link" href="{% url 'types' event.slug %}">credential types</a> before adding people or inviting partners.</p></div></div>
+{% endif %}
+
+<div class="stats">
+  <a class="card stat" href="{% url 'people' event.slug %}?status=approved" style="text-decoration:none">
+    <div class="label">{% icon "badge" %}Accredited</div>
+    <div class="value">{{ stats.approved }}</div>
+    <div class="sub">{{ stats.companies }} compan{{ stats.companies|pluralize:"y,ies" }}</div>
+  </a>
+  <a class="card stat" href="{% url 'approvals' event.slug %}" style="text-decoration:none">
+    <div class="label">{% icon "inbox" %}Waiting for approval</div>
+    <div class="value"{% if stats.pending %} style="color:var(--warning)"{% endif %}>{{ stats.pending }}</div>
+    <div class="sub">from partner portals</div>
+  </a>
+  <div class="card stat">
+    <div class="label">{% icon "scan" %}Arrived</div>
+    <div class="value">{{ stats.arrived }} <small>/ {{ stats.approved }}</small></div>
+    <div class="bar" style="--c:var(--success)"><span style="width:{{ stats.arrived|percent:stats.approved }}%"></span></div>
+    <div class="sub">{{ stats.inside }} on site now</div>
+  </div>
+  <a class="card stat" href="{% url 'artist_list' event.slug %}" style="text-decoration:none">
+    <div class="label">{% icon "mic" %}Advancing complete</div>
+    <div class="value">{{ stats.advanced }} <small>/ {{ stats.artists }}</small></div>
+    <div class="bar"><span style="width:{{ stats.advanced|percent:stats.artists }}%"></span></div>
+  </a>
+  <a class="card stat" href="{% url 'shifts' event.slug %}" style="text-decoration:none">
+    <div class="label">{% icon "clock" %}Shift slots filled</div>
+    <div class="value">{{ stats.filled }} <small>/ {{ stats.slots }}</small></div>
+    <div class="bar" style="--c:#0d9488"><span style="width:{{ stats.filled|percent:stats.slots }}%"></span></div>
+  </a>
+</div>
+
+<div class="split">
+  <div>
+    <section class="card">
+      <div class="card-head"><h2>Waiting for approval</h2><a class="btn btn-sm" href="{% url 'approvals' event.slug %}">Review all</a></div>
+      {% if pending %}
+      <ul class="list">
+        {% for p in pending %}
+        <li>
+          <span class="avatar" style="--c:{{ p.type.color }};--t:{{ p.type.color|text_on }}">{{ p.initials }}</span>
+          <div class="grow"><a class="title" href="{{ p.get_absolute_url }}">{{ p.full_name }}</a><div class="small muted">{{ p.company.name|default:"No company" }}{% if p.role %} · {{ p.role }}{% endif %}</div></div>
+          {% pill p.type %}
+          <span class="small faint nowrap hide-sm">{{ p.submitted_at|timesince }} ago</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty-inline">{% icon "check" %} All caught up – nothing waiting.</p>{% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Check-in by credential</h2></div>
+      <div class="card-body">
+        {% if by_type %}
+        <ul class="meters">
+          {% for t in by_type %}
+          <li><div class="top">{% dot t %}<span>{{ t.name }}</span><span class="num"><b>{{ t.arrived }}</b> / {{ t.total }}</span></div>
+            <div class="bar" style="--c:{{ t.color }}"><span style="width:{{ t.arrived|percent:t.total }}%"></span></div></li>
+          {% endfor %}
+        </ul>
+        {% else %}<p class="muted small">No approved accreditations yet.</p>{% endif %}
+      </div>
+    </section>
+
+    {% if show_day %}
+    <section class="card">
+      <div class="card-head"><h2>Running order · {{ show_day.title }}</h2><a class="btn btn-sm" href="{% url 'timetable' event.slug %}?day={{ show_day.pk }}">Timetable</a></div>
+      {% if performances %}
+      <ul class="list">
+        {% for perf in performances %}
+        <li><span class="mono nowrap" style="width:96px">{{ perf.start|time:"H:i" }}–{{ perf.end|time:"H:i" }}</span><a class="title grow" href="{{ perf.artist.get_absolute_url }}">{{ perf.artist }}</a>{% pill perf.stage %}</li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty-inline">No performances scheduled for this day.</p>{% endif %}
+    </section>
+    {% endif %}
+  </div>
+
+  <aside>
+    <section class="card">
+      <div class="card-head"><h2>Activity</h2></div>
+      {% if activity %}
+      <ul class="list">
+        {% for a in activity %}
+        <li style="align-items:flex-start">
+          <span class="avatar" style="width:26px;height:26px;font-size:.65rem">{{ a.who|slice:":2"|upper }}</span>
+          <div class="grow small">{% if a.url %}<a href="{{ a.url }}" style="text-decoration:none">{{ a.text }}</a>{% else %}{{ a.text }}{% endif %}<div class="faint">{{ a.who }} · {{ a.created_at|timesince }} ago</div></div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty-inline">Nothing happened yet.</p>{% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}
