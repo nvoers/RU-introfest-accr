@@ -12,12 +12,27 @@ class Team(models.Model):
     description = models.TextField(
         blank=True, help_text="Shown to volunteers when they sign up."
     )
+    shift_credential = models.ForeignKey(
+        AccreditationType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="each shift gives",
+        help_text="Zones and items of this credential are added for every shift in this team.",
+    )
 
     class Meta:
         ordering = ["name"]
 
     def __str__(self):
         return self.name
+
+    @property
+    def perk_text(self):
+        from .perks import describe
+
+        return describe([self.shift_credential] if self.shift_credential else [])
 
 
 class Shift(models.Model):
@@ -31,6 +46,15 @@ class Shift(models.Model):
         default=True, help_text="Volunteers can claim this shift themselves."
     )
     notes = models.CharField(max_length=300, blank=True)
+    shift_credential = models.ForeignKey(
+        AccreditationType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="this shift also gives",
+        help_text="Added on top of what the team gives, e.g. an extra card amount for a dinner shift.",
+    )
 
     class Meta:
         ordering = ["day__date", "start", "team__name"]
@@ -45,6 +69,17 @@ class Shift(models.Model):
         if end <= start:
             end += 24 * 60
         return round((end - start) / 60, 1)
+
+    @property
+    def perks(self):
+        """Credentials whose zones/items this shift adds: the team's, plus the shift's own extra."""
+        return [c for c in (self.team.shift_credential, self.shift_credential) if c is not None]
+
+    @property
+    def perk_text(self):
+        from .perks import describe
+
+        return describe(self.perks)
 
     def filled(self):
         return self.assignments.count()

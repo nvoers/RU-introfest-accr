@@ -37,6 +37,12 @@ class ItemForm(EventModelForm):
             and self.cleaned_data["kind"] == Item.PAYMENT_CARD
         )
         item = super().save(commit=commit)
+        if item.is_payment_card and "default_amount" in self.changed_data:
+            # Shift credentials without their own amount use this default.
+            from crew import perks
+
+            for default in item.typeitem_set.filter(amount__isnull=True).select_related("type"):
+                perks.sync_for_credential(default.type)
         if became_card:
             # An existing item turned into a payment card: quantities meant "number of
             # items" before, so credentials now give one card at the default amount,
@@ -106,6 +112,10 @@ class TypeForm(EventModelForm):
                 )
             else:
                 TypeItem.objects.filter(type=obj, item_id=item_id).delete()
+        # Shifts may hand out this credential's items/zones: keep those people up to date.
+        from crew import perks
+
+        perks.sync_for_credential(obj)
         return obj
 
     def item_bound_fields(self):

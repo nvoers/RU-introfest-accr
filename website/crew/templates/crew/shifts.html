@@ -17,7 +17,7 @@
     <tbody>{% for row in rows %}{% with obj=row.obj %}{% with n=obj.assignments.all|length %}
       <tr>
         <td class="nowrap"><b>{{ obj.day.short }}</b> {{ obj.start|time:"H:i" }}–{{ obj.end|time:"H:i" }}<span class="sub">{{ obj.hours }} h{% if not obj.open_for_signup %} · invite only{% endif %}</span></td>
-        <td>{% pill obj.team %}</td>
+        <td>{% pill obj.team %}{% if obj.perk_text %}<span class="sub" title="Each person on this shift gets this{% if obj.shift_credential %} (team + {{ obj.shift_credential.name }}){% endif %}">{% if obj.shift_credential %}★ {% endif %}{{ obj.perk_text }}</span>{% endif %}</td>
         <td class="hide-sm small">{{ obj.location|default:"—" }}</td>
         <td style="min-width:90px"><span class="small"><b>{{ n }}</b> / {{ obj.capacity }}</span><div class="bar{% if n >= obj.capacity %} full{% endif %}" style="height:5px;margin-top:.25rem;--c:var(--success)"><span style="width:{{ n|percent:obj.capacity }}%"></span></div></td>
         <td><div class="tags">{% for a in obj.assignments.all %}<form method="post" class="inline">{% csrf_token %}<input type="hidden" name="item" value="{{ obj.pk }}" /><input type="hidden" name="assignment" value="{{ a.pk }}" /><span class="badge">{{ a.person.full_name }}<button name="action" value="unassign" style="border:0;background:none;color:inherit;cursor:pointer;padding:0" title="Remove">×</button></span></form>{% endfor %}</div></td>

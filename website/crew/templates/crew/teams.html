@@ -12,6 +12,7 @@
     <div class="card-head plain">{% pill obj "lg" %}<span class="grow"></span>{% include "components/row_actions.html" with warn="All its shifts are deleted too." %}</div>
     <div class="card-body small">
       {% if obj.lead %}<p><span class="muted">Lead:</span> {{ obj.lead }}</p>{% endif %}
+      <p style="margin-top:.3rem"><span class="muted">Each shift gives:</span> {{ obj.perk_text|default:"nothing extra" }}</p>
       {% if obj.description %}<p class="muted" style="margin-top:.3rem">{{ obj.description|truncatechars:140 }}</p>{% endif %}
       <a class="link" style="display:inline-block;margin-top:.6rem" href="{% url 'shifts' event.slug %}?team={{ obj.pk }}">{{ obj.n }} shift{{ obj.n|pluralize }} →</a>
     </div>

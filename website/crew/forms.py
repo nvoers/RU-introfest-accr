@@ -4,28 +4,50 @@ from accreditation.models import Accreditation
 from core.forms import COLOR, TIME
 from core.helpers import EventModelForm
 
+from . import perks
 from .models import CrewSettings, Shift, Team, VolunteerProfile
 
 
 class TeamForm(EventModelForm):
+    event_querysets = {"shift_credential": "accreditation_types"}
+
     class Meta:
         model = Team
-        fields = ["name", "color", "lead", "description"]
+        fields = ["name", "color", "lead", "shift_credential", "description"]
         widgets = {"color": COLOR, "description": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["shift_credential"].empty_label = "Nothing extra"
+
+    def save(self, commit=True):
+        team = super().save(commit=commit)
+        if "shift_credential" in self.changed_data:
+            perks.sync_shifts(team.shifts.all())
+        return team
 
 
 class ShiftForm(forms.ModelForm):
     class Meta:
         model = Shift
-        fields = ["team", "day", "start", "end", "location", "capacity", "open_for_signup", "notes"]
+        fields = ["team", "day", "start", "end", "location", "capacity", "shift_credential",
+                  "open_for_signup", "notes"]
         widgets = {"start": TIME, "end": TIME}
 
     def __init__(self, *args, event, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["team"].queryset = event.teams.all()
         self.fields["day"].queryset = event.days.all()
+        self.fields["shift_credential"].queryset = event.accreditation_types.all()
         self.fields["team"].empty_label = None
         self.fields["day"].empty_label = None
+        self.fields["shift_credential"].empty_label = "Nothing extra"
+
+    def save(self, commit=True):
+        shift = super().save(commit=commit)
+        if {"shift_credential", "team"} & set(self.changed_data):
+            perks.sync_shifts([shift])
+        return shift
 
 
 class CrewSettingsForm(forms.ModelForm):

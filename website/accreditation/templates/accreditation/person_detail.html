@@ -52,12 +52,11 @@
       <ul class="list">
         {% for h in handouts %}
         <li>
-          <span class="grow">{% if h.is_payment_card %}<b>{{ h.item.name }}</b>{% if h.quantity > 1 %} <span class="muted small">× {{ h.quantity }}</span>{% endif %}{% else %}<b>{{ h.quantity }}× {{ h.item.name }}</b> <span class="muted small">{{ h.item.get_kind_display }}</span>{% endif %}</span>
+          <span class="grow">{% if h.is_payment_card %}<b>{{ h.item.name }}</b>{% if h.quantity > 1 %} <span class="muted small">× {{ h.quantity }}</span>{% endif %} <b style="margin-left:.4rem;font-size:1.05rem">{{ h.total_amount|money }}</b>{% if h.shift_amount %}<span class="sub">{% if h.amount %}{{ h.amount|money }} own{% if h.quantity > 1 %} × {{ h.quantity }}{% endif %} + {% endif %}{{ h.shift_amount|money }} from shifts</span>{% endif %}{% else %}<b>{{ h.total_quantity }}× {{ h.item.name }}</b> <span class="muted small">{{ h.item.get_kind_display }}</span>{% if h.shift_quantity %}<span class="sub">{{ h.shift_quantity }} from shifts</span>{% endif %}{% endif %}</span>
           {% if h.is_payment_card %}
           <form method="post" class="row nowrap" style="--gap:.35rem">{% csrf_token %}<input type="hidden" name="handout" value="{{ h.pk }}" />
             <label class="sr-only" for="amt-{{ h.pk }}">Amount</label>
-            <span class="ro-only"><b>{{ h.amount|money }}</b></span>
-            <span class="muted edit-only">€</span><input class="input" id="amt-{{ h.pk }}" name="amount" value="{{ h.amount|default_if_none:'0.00'|stringformat:'.2f' }}" inputmode="decimal" style="width:90px;height:30px;text-align:right" />
+            <span class="muted edit-only small">{% if h.shift_amount %}Own €{% else %}€{% endif %}</span><input class="input" id="amt-{{ h.pk }}" name="amount" value="{{ h.amount|default_if_none:'0.00'|stringformat:'.2f' }}" inputmode="decimal" style="width:90px;height:30px;text-align:right" />
             <button class="btn btn-sm" name="action" value="item_amount">Save</button>
           </form>
           {% endif %}
@@ -107,7 +106,7 @@
     {% if shifts %}
     <section class="card">
       <div class="card-head"><h2>Shifts</h2></div>
-      <ul class="list">{% for a in shifts %}<li>{% dot a.shift.team %}<span class="grow small"><b>{{ a.shift.team }}</b><br><span class="muted">{{ a.shift.day }} · {{ a.shift.start|time:"H:i" }}–{{ a.shift.end|time:"H:i" }}</span></span></li>{% endfor %}</ul>
+      <ul class="list">{% for a in shifts %}<li>{% dot a.shift.team %}<span class="grow small"><b>{{ a.shift.team }}</b><br><span class="muted">{{ a.shift.day }} · {{ a.shift.start|time:"H:i" }}–{{ a.shift.end|time:"H:i" }}</span>{% if a.shift.perk_text %}<br><span class="faint">Gives: {{ a.shift.perk_text }}</span>{% endif %}</span></li>{% endfor %}</ul>
     </section>
     {% endif %}
     <section class="card">

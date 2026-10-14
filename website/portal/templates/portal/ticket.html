@@ -34,7 +34,7 @@
   <div class="card-head"><h2>My shifts</h2></div>
   {% if my_shifts %}
   <ul class="list">{% for a in my_shifts %}
-    <li>{% dot a.shift.team %}<span class="grow"><b>{{ a.shift.team }}</b> · {{ a.shift.day.title }}<br><span class="small muted">{{ a.shift.start|time:"H:i" }}–{{ a.shift.end|time:"H:i" }}{% if a.shift.location %} · {{ a.shift.location }}{% endif %}</span></span>
+    <li>{% dot a.shift.team %}<span class="grow"><b>{{ a.shift.team }}</b> · {{ a.shift.day.title }}<br><span class="small muted">{{ a.shift.start|time:"H:i" }}–{{ a.shift.end|time:"H:i" }}{% if a.shift.location %} · {{ a.shift.location }}{% endif %}</span>{% if a.shift.perk_text %}<br><span class="small faint">You get: {{ a.shift.perk_text }}</span>{% endif %}</span>
       {% if a.self_assigned %}<form method="post" class="inline" data-confirm="Drop this shift?">{% csrf_token %}<input type="hidden" name="assignment" value="{{ a.pk }}" /><button class="btn btn-sm btn-ghost" name="action" value="drop">Drop</button></form>{% endif %}</li>
   {% endfor %}</ul>
   {% else %}<p class="empty-inline">No shifts yet – pick some below.</p>{% endif %}
@@ -43,7 +43,7 @@
   <div class="card-head"><h2>Open shifts</h2></div>
   {% if open_shifts %}
   <ul class="list">{% for s in open_shifts %}
-    <li>{% dot s.team %}<span class="grow"><b>{{ s.team }}</b> · {{ s.day.title }}<br><span class="small muted">{{ s.start|time:"H:i" }}–{{ s.end|time:"H:i" }}{% if s.location %} · {{ s.location }}{% endif %} · {{ s.filled }}/{{ s.capacity }} filled</span></span>
+    <li>{% dot s.team %}<span class="grow"><b>{{ s.team }}</b> · {{ s.day.title }}<br><span class="small muted">{{ s.start|time:"H:i" }}–{{ s.end|time:"H:i" }}{% if s.location %} · {{ s.location }}{% endif %} · {{ s.filled }}/{{ s.capacity }} filled</span>{% if s.perk_text %}<br><span class="small faint">You get: {{ s.perk_text }}</span>{% endif %}</span>
       <form method="post" class="inline">{% csrf_token %}<input type="hidden" name="shift" value="{{ s.pk }}" /><button class="btn btn-sm btn-primary" name="action" value="claim">Sign up</button></form></li>
   {% endfor %}</ul>
   {% else %}<p class="empty-inline">No open shifts match your preferences right now.</p>{% endif %}

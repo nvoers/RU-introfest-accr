@@ -262,6 +262,10 @@ class Accreditation(models.Model):
         related_name="extra_accreditations",
         help_text="Zones on top of what the type gives.",
     )
+    # Filled automatically from the person's shifts (see crew.perks).
+    shift_zones = models.ManyToManyField(
+        Zone, blank=True, related_name="shift_accreditations", editable=False
+    )
     notes = models.TextField(blank=True)
 
     status = models.CharField(max_length=20, choices=STATUSES.items(), default=APPROVED)
@@ -314,6 +318,7 @@ class Accreditation(models.Model):
     def all_zones(self):
         zones = {z.pk: z for z in self.type.zones.all()}
         zones.update({z.pk: z for z in self.extra_zones.all()})
+        zones.update({z.pk: z for z in self.shift_zones.all()})
         return sorted(zones.values(), key=lambda z: (z.order, z.name))
 
     def valid_days(self):
@@ -366,6 +371,12 @@ class AccreditationItem(models.Model):
         validators=[MinValueValidator(Decimal("0"))],
         help_text="Payment cards: amount on the card for this person.",
     )
+    # Added on top by the person's shifts (see crew.perks); recalculated automatically.
+    shift_quantity = models.PositiveIntegerField(default=0, editable=False)
+    shift_amount = models.DecimalField(
+        max_digits=8, decimal_places=2, default=Decimal("0"), editable=False
+    )
+    from_shifts = models.BooleanField(default=False, editable=False)
     issued_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -385,15 +396,24 @@ class AccreditationItem(models.Model):
         return self.item.is_payment_card
 
     @property
+    def total_quantity(self):
+        return self.quantity + self.shift_quantity
+
+    @property
     def total_amount(self):
-        """Total credit: amount per card × number of cards."""
-        return (self.amount or Decimal("0")) * self.quantity
+        """Total on the card(s): own amount × cards, plus what shifts add."""
+        return (self.amount or Decimal("0")) * self.quantity + self.shift_amount
+
+    @property
+    def has_shift_part(self):
+        return bool(self.shift_quantity or self.shift_amount)
 
     @property
     def label(self):
         if self.is_payment_card:
-            return f"{self.quantity}× {self.item.name} · {money(self.amount)}"
-        return f"{self.quantity}× {self.item.name}"
+            cards = f"{self.quantity}× " if self.quantity > 1 else ""
+            return f"{cards}{self.item.name} · {money(self.total_amount)}"
+        return f"{self.total_quantity}× {self.item.name}"
 
 
 def money(value):

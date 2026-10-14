@@ -97,7 +97,11 @@ class Command(BaseCommand):
         guest_t = ctype("Guest", "#facc15", ["Terrain", "VIP"], [("Guest wristband", 1), ("Payment card", 20)], order=4)
         press_t = ctype("Press", "#14b8a6", ["Terrain", "Backstage"], [("Guest wristband", 1)], order=5)
         supplier_t = ctype("Supplier", "#78716c", ["Terrain", "Production"], [("Parking P2", 1)], approval=False, order=6)
-        vol_t = ctype("Volunteer", "#16a34a", ["Terrain"], [("Crew wristband", 1), ("Meal voucher", 1), ("Crew T-shirt", 1), ("Payment card", 7.5)], order=7)
+        vol_t = ctype("Volunteer", "#16a34a", ["Terrain"], [("Crew wristband", 1), ("Crew T-shirt", 1)], order=7)
+        # What volunteers earn per shift, depending on where they work (see Teams/Shifts).
+        bar_shift = ctype("Bar shift", "#f59e0b", [], [("Meal voucher", 1)], order=10)
+        disco_shift = ctype("Silent disco shift", "#a855f7", ["Backstage"], [("Payment card", 12.5)], order=11)
+        disco_dinner = ctype("Dinner shift extra", "#7c3aed", [], [("Payment card", 12.5)], order=12)
 
         def add(company, type_, status="approved", role="", days=None):
             first, last = person()
@@ -173,7 +177,11 @@ class Command(BaseCommand):
                  for n, c, d in [("Bar", "#f59e0b", "Pour drinks and keep the bars running."),
                                  ("Entrance", "#3b82f6", "Scan tickets and welcome visitors."),
                                  ("Clean-up", "#16a34a", "Keep the terrain clean."),
-                                 ("Info stand", "#a855f7", "Help visitors find their way.")]]
+                                 ("Silent disco", "#a855f7", "Hand out and collect headphones.")]]
+        teams[0].shift_credential = bar_shift
+        teams[0].save()
+        teams[3].shift_credential = disco_shift
+        teams[3].save()
         settings = CrewSettings.for_event(event)
         settings.signup_open = True
         settings.accreditation_type = vol_t
@@ -184,8 +192,12 @@ class Command(BaseCommand):
         for team in teams:
             for day in (d1, d2, d3) if team.name == "Clean-up" else (d2,):
                 for start, end in [(time(12), time(16)), (time(16), time(20)), (time(20), time(0))]:
+                    # The silent disco shift over dinner time earns an extra €12.50 on top.
+                    dinner = team.name == "Silent disco" and start == time(16)
                     shifts.append(Shift.objects.create(team=team, day=day, start=start, end=end,
-                                                       capacity=rnd.randint(3, 6), location=f"{team.name} area"))
+                                                       capacity=rnd.randint(3, 6), location=f"{team.name} area",
+                                                       shift_credential=disco_dinner if dinner else None,
+                                                       notes="Dinner shift" if dinner else ""))
         for i in range(18):
             acc = add(vol_company, vol_t, status="pending" if i >= 14 else "approved", role="Volunteer", days=[d2])
             profile = VolunteerProfile.objects.create(person=acc, shirt_size=rnd.choice(["S", "M", "L", "XL"]))
