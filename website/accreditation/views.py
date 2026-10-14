@@ -3,6 +3,7 @@ import json
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponse, JsonResponse
@@ -13,6 +14,7 @@ from django.views.decorators.http import require_POST
 
 from core.helpers import crud_page, get_event, render_event, safe_next
 from core.models import log, new_token
+from core.permissions import event_view
 
 from . import services
 from .forms import (
@@ -38,6 +40,7 @@ def parse_amount(value):
 # --------------------------------------------------------------------- setup
 
 
+@event_view('setup')
 def zones(request, slug):
     event = get_event(slug)
     return crud_page(
@@ -50,6 +53,7 @@ def zones(request, slug):
     )
 
 
+@event_view('setup')
 def items(request, slug):
     event = get_event(slug)
     return crud_page(
@@ -62,6 +66,7 @@ def items(request, slug):
     )
 
 
+@event_view('setup')
 def types(request, slug):
     event = get_event(slug)
     return crud_page(
@@ -85,6 +90,7 @@ def people_queryset(event):
     )
 
 
+@event_view('accreditation')
 def people(request, slug):
     event = get_event(slug)
     if request.method == "POST":
@@ -176,8 +182,11 @@ def bulk_card(request, event, selected):
     return safe_next(request, request.get_full_path())
 
 
+@event_view('accreditation')
 def person_form(request, slug, pk=None):
     event = get_event(slug)
+    if not request.access.can("accreditation", edit=True):
+        raise PermissionDenied("Your role can't add or edit people.")
     acc = get_object_or_404(event.accreditations, pk=pk) if pk else None
     initial = {}
     if not acc and request.GET.get("company"):
@@ -207,6 +216,7 @@ def person_form(request, slug, pk=None):
     )
 
 
+@event_view('accreditation')
 def person_detail(request, slug, pk):
     event = get_event(slug)
     acc = get_object_or_404(
@@ -300,6 +310,7 @@ def person_action(request, acc):
     return safe_next(request, acc.get_absolute_url())
 
 
+@event_view('accreditation')
 def approvals(request, slug):
     event = get_event(slug)
     if request.method == "POST":
@@ -322,6 +333,7 @@ def approvals(request, slug):
     )
 
 
+@event_view('accreditation')
 def export_people(request, slug):
     event = get_event(slug)
     response = HttpResponse(content_type="text/csv; charset=utf-8")
@@ -361,6 +373,7 @@ def export_people(request, slug):
 # ----------------------------------------------------------------- companies
 
 
+@event_view('accreditation')
 def companies(request, slug):
     event = get_event(slug)
     form = CompanyForm(request.POST or None, event=event, prefix="f-new")
@@ -392,6 +405,7 @@ def companies(request, slug):
     )
 
 
+@event_view('accreditation')
 def company_detail(request, slug, pk):
     event = get_event(slug)
     company = get_object_or_404(event.companies, pk=pk)
@@ -454,6 +468,7 @@ def company_detail(request, slug, pk):
 # ------------------------------------------------------------------- scanner
 
 
+@event_view('scan')
 def scanner(request, slug):
     event = get_event(slug)
     return render_event(
@@ -473,6 +488,7 @@ def scanner(request, slug):
     )
 
 
+@event_view('scan')
 @require_POST
 def scan_api(request, slug):
     event = get_event(slug)
@@ -487,6 +503,7 @@ def scan_api(request, slug):
     return JsonResponse(services.process_scan(event, data.get("code", ""), zone, direction, request.user))
 
 
+@event_view('scan')
 @require_POST
 def handout_api(request, slug, pk):
     event = get_event(slug)
@@ -496,6 +513,7 @@ def handout_api(request, slug, pk):
     return JsonResponse({"ok": True})
 
 
+@event_view('scan')
 def search_api(request, slug):
     event = get_event(slug)
     q = request.GET.get("q", "").strip()

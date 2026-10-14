@@ -5,7 +5,7 @@
   <div class="titles"><h1>People</h1><p>Everyone with an accreditation for this event.</p></div>
   <div class="row">
     <a class="btn" href="{% url 'people_export' event.slug %}">{% icon "download" %}Export</a>
-    <a class="btn btn-primary" href="{% url 'person_create' event.slug %}">{% icon "user-plus" %}Add person</a>
+    <a class="btn btn-primary edit-only" href="{% url 'person_create' event.slug %}">{% icon "user-plus" %}Add person</a>
   </div>
 </div>
 

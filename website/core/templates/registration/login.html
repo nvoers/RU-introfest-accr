@@ -18,10 +18,11 @@
       {% if form.errors %}<ul class="errorlist nonfield" style="margin-bottom:1rem"><li>Username and password don't match.</li></ul>{% endif %}
       <input type="hidden" name="next" value="{{ next }}" />
       <div class="form-grid one">
-        <div class="field"><label for="id_username">Username</label><input id="id_username" name="username" autocomplete="username" autofocus required value="{{ form.username.value|default:'' }}" /></div>
+        <div class="field"><label for="id_username">E-mail or username</label><input id="id_username" name="username" autocomplete="username" autofocus required value="{{ form.username.value|default:'' }}" /></div>
         <div class="field"><label for="id_password">Password</label><input id="id_password" type="password" name="password" autocomplete="current-password" required /></div>
       </div>
       <button class="btn btn-primary btn-lg" style="width:100%;margin-top:1.4rem">Sign in</button>
+      <p class="small" style="margin-top:1rem;text-align:center"><a class="link" href="{% url 'password_reset' %}">Forgot your password?</a></p>
     </form>
   </div>
 </div>

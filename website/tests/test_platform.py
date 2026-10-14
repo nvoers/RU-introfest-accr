@@ -19,7 +19,7 @@ from accreditation.models import (
     Zone,
 )
 from artists.models import Artist, Performance, Stage
-from core.models import Event
+from core.models import Event, Membership
 from crew.models import CrewSettings, Shift, ShiftAssignment, Team
 
 
@@ -29,6 +29,7 @@ class Base(TestCase):
         self.client.force_login(self.user)
         today = timezone.localdate()
         self.event = Event.objects.create(name="Fest", start_date=today, end_date=today + timedelta(days=1))
+        Membership.objects.create(user=self.user, event=self.event, role="manager")
         self.day1, self.day2 = self.event.days.all()
         self.backstage = Zone.objects.create(event=self.event, name="Backstage")
         self.vip = Zone.objects.create(event=self.event, name="VIP")
@@ -64,6 +65,7 @@ class EventTests(Base):
         self.assertEqual(self.client.get(reverse("portal_home", args=[self.company.token])).status_code, 200)
 
     def test_all_organiser_pages_render_with_demo_data(self):
+        self.client.force_login(User.objects.create_superuser("admin", password="pw"))
         call_command("seed_demo", name="Demo", stdout=open("/dev/null", "w"))
         event = Event.objects.get(name="Demo")
         acc = event.accreditations.filter(status="approved").first()
@@ -118,6 +120,7 @@ class SetupTests(Base):
 
     def test_zone_from_other_event_is_404(self):
         other = Event.objects.create(name="Other", start_date=date(2030, 1, 1), end_date=date(2030, 1, 1))
+        Membership.objects.create(user=self.user, event=other, role="manager")
         response = self.client.post(reverse("zones", args=[other.slug]), {"action": "delete", "item": self.vip.pk})
         self.assertEqual(response.status_code, 404)
 

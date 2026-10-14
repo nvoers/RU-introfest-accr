@@ -22,7 +22,7 @@
     {% else %}
       <button class="btn" name="action" value="restore">{% icon "undo" %}Back to pending</button>
     {% endif %}
-    <a class="btn btn-primary" href="{% url 'person_edit' event.slug person.pk %}">{% icon "edit" %}Edit</a>
+    <a class="btn btn-primary edit-only" href="{% url 'person_edit' event.slug person.pk %}">{% icon "edit" %}Edit</a>
   </form>
 </div>
 
@@ -56,7 +56,8 @@
           {% if h.is_payment_card %}
           <form method="post" class="row nowrap" style="--gap:.35rem">{% csrf_token %}<input type="hidden" name="handout" value="{{ h.pk }}" />
             <label class="sr-only" for="amt-{{ h.pk }}">Amount</label>
-            <span class="muted">€</span><input class="input" id="amt-{{ h.pk }}" name="amount" value="{{ h.amount|default_if_none:'0.00'|stringformat:'.2f' }}" inputmode="decimal" style="width:90px;height:30px;text-align:right" />
+            <span class="ro-only"><b>{{ h.amount|money }}</b></span>
+            <span class="muted edit-only">€</span><input class="input" id="amt-{{ h.pk }}" name="amount" value="{{ h.amount|default_if_none:'0.00'|stringformat:'.2f' }}" inputmode="decimal" style="width:90px;height:30px;text-align:right" />
             <button class="btn btn-sm" name="action" value="item_amount">Save</button>
           </form>
           {% endif %}
@@ -69,7 +70,7 @@
       </ul>
       {% else %}<p class="empty-inline">No items allocated.</p>{% endif %}
       {% if available_items %}
-      <form method="post" class="card-foot row nowrap">
+      <form method="post" class="card-foot row nowrap edit-only">
         {% csrf_token %}<input type="hidden" name="action" value="item_add" />
         <select class="input" name="item" aria-label="Item" onchange="this.form.amount.hidden=!this.selectedOptions[0].dataset.card;this.form.quantity.hidden=!this.form.amount.hidden">{% for i in available_items %}<option value="{{ i.pk }}"{% if i.is_payment_card %} data-card="1"{% endif %}>{{ i.name }}</option>{% endfor %}</select>
         <input class="input" type="number" name="quantity" value="1" min="1" style="width:70px" aria-label="Quantity"{% if available_items.0.is_payment_card %} hidden{% endif %} />

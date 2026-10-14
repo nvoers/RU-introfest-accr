@@ -556,3 +556,13 @@ dialog[open] { animation: pop 0.15s ease-out; }
   .card { box-shadow: none; border-color: #bbb; break-inside: avoid; }
   .pill, .dot, .swatch { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Read-only pages: hide the controls that change data (the server refuses it anyway),
+   but keep the content that lives inside those forms visible. */
+.readonly form[method="post"] :is(button, select, textarea, input:not([type="hidden"])),
+.readonly [data-open],
+.readonly .edit-only,
+.readonly .bulkbar,
+.readonly .table .check { display: none !important; }
+.ro-only { display: none; }
+.readonly .ro-only { display: inline; }

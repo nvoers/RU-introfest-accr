@@ -1,7 +1,7 @@
 from django.urls import path
 from django.views.generic import RedirectView
 
-from . import views
+from . import team, views
 
 urlpatterns = [
     path("", RedirectView.as_view(pattern_name="event_list")),
@@ -10,4 +10,5 @@ urlpatterns = [
     path("e/<slug:slug>/", views.dashboard, name="dashboard"),
     path("e/<slug:slug>/settings/", views.event_settings, name="event_settings"),
     path("e/<slug:slug>/settings/delete/", views.event_delete, name="event_delete"),
+    path("e/<slug:slug>/team/", team.team, name="team"),
 ]

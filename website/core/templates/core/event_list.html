@@ -3,19 +3,21 @@
 {% block content %}
 <div class="page-head">
   <div class="titles"><h1>Events</h1><p>Pick an event to work on, or start a new one.</p></div>
-  <a class="btn btn-primary" href="{% url 'event_create' %}">{% icon "plus" %}New event</a>
+  {% if can_create %}<a class="btn btn-primary" href="{% url 'event_create' %}">{% icon "plus" %}New event</a>{% endif %}
 </div>
 
 {% if upcoming %}
 <h2 class="small muted" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem">Upcoming</h2>
 <div class="grid cols-3">
   {% for event in upcoming %}{% include "core/_event_card.html" %}{% endfor %}
-  <a class="new-card" href="{% url 'event_create' %}">{% icon "plus" %}New event</a>
+  {% if can_create %}<a class="new-card" href="{% url 'event_create' %}">{% icon "plus" %}New event</a>{% endif %}
 </div>
 {% else %}
 <div class="card empty">
-  {% icon "calendar" %}<h3>No upcoming events</h3><p>Create an event to set up accreditation, artists and crew.</p>
+  {% icon "calendar" %}<h3>No upcoming events</h3>
+  {% if can_create %}<p>Create an event to set up accreditation, artists and crew.</p>
   <a class="btn btn-primary" href="{% url 'event_create' %}">{% icon "plus" %}New event</a>
+  {% else %}<p>You haven't been added to an event yet. Ask the event manager to invite you.</p>{% endif %}
 </div>
 {% endif %}
 

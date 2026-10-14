@@ -11,12 +11,12 @@
     </div>
   </div>
   <div class="row">
-    <a class="btn" href="{% url 'scanner' event.slug %}">{% icon "scan" %}Open check-in</a>
-    <a class="btn btn-primary" href="{% url 'person_create' event.slug %}">{% icon "user-plus" %}Add person</a>
+    {% if can.edit_scan %}<a class="btn" href="{% url 'scanner' event.slug %}">{% icon "scan" %}Open check-in</a>{% endif %}
+    {% if can.edit_accreditation %}<a class="btn btn-primary" href="{% url 'person_create' event.slug %}">{% icon "user-plus" %}Add person</a>{% endif %}
   </div>
 </div>
 
-{% if not event.accreditation_types.exists %}
+{% if can.edit_setup and not event.accreditation_types.exists %}
 <div class="callout warning" style="margin-bottom:1.25rem">{% icon "info" %}<div><b>Finish the setup.</b> <p>Create <a class="link" href="{% url 'zones' event.slug %}">zones</a> and <a class="link" href="{% url 'types' event.slug %}">credential types</a> before adding people or inviting partners.</p></div></div>
 {% endif %}
 

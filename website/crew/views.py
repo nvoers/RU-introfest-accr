@@ -8,11 +8,13 @@ from accreditation.models import Accreditation
 from accreditation.services import absolute
 from core.helpers import crud_page, get_event, render_event
 from core.models import log
+from core.permissions import event_view
 
 from .forms import CrewSettingsForm, ShiftForm, TeamForm
 from .models import CrewSettings, Shift, ShiftAssignment
 
 
+@event_view('crew')
 def teams(request, slug):
     event = get_event(slug)
     return crud_page(
@@ -39,6 +41,7 @@ def shift_queryset(event):
     )
 
 
+@event_view('crew')
 def shifts(request, slug):
     event = get_event(slug)
     if not event.teams.exists():
@@ -106,6 +109,7 @@ def shifts(request, slug):
     )
 
 
+@event_view('crew')
 def roster(request, slug):
     event = get_event(slug)
     days = list(event.days.all())
@@ -127,6 +131,7 @@ def roster(request, slug):
     )
 
 
+@event_view('crew')
 def volunteers(request, slug):
     event = get_event(slug)
     settings = CrewSettings.for_event(event)

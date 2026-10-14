@@ -8,27 +8,38 @@
       <small>Event · switch</small><b>{{ event.name }}</b>
     </a>
     <nav class="side-nav">
-      <a href="{% url 'dashboard' event.slug %}"{% active "dashboard" %}>{% icon "home" %}Dashboard</a>
-      <div class="side-label">Accreditation</div>
+      {% if not access.only_scans %}<a href="{% url 'dashboard' event.slug %}"{% active "dashboard" %}>{% icon "home" %}Dashboard</a>{% endif %}
+      {% if can.accreditation or can.scan %}<div class="side-label">Accreditation</div>{% endif %}
+      {% if can.accreditation %}
       <a href="{% url 'people' event.slug %}"{% active "people" "person" %}>{% icon "users" %}People</a>
-      <a href="{% url 'approvals' event.slug %}"{% active "approvals" %}>{% icon "inbox" %}Approvals{% if nav.pending %}<span class="count">{{ nav.pending }}</span>{% endif %}</a>
+      <a href="{% url 'approvals' event.slug %}"{% active "approvals" %}>{% icon "inbox" %}Approvals{% if nav.pending and can.edit_accreditation %}<span class="count">{{ nav.pending }}</span>{% endif %}</a>
       <a href="{% url 'companies' event.slug %}"{% active "companies" "company" %}>{% icon "building" %}Companies</a>
-      <a href="{% url 'scanner' event.slug %}"{% active "scanner" %}>{% icon "scan" %}Check-in</a>
+      {% endif %}
+      {% if can.edit_scan %}<a href="{% url 'scanner' event.slug %}"{% active "scanner" %}>{% icon "scan" %}Check-in</a>{% endif %}
+      {% if can.artists %}
       <div class="side-label">Artists</div>
-      <a href="{% url 'artist_list' event.slug %}"{% active "artist" %}>{% icon "mic" %}Artists{% if nav.advancing %}<span class="count">{{ nav.advancing }}</span>{% endif %}</a>
+      <a href="{% url 'artist_list' event.slug %}"{% active "artist" %}>{% icon "mic" %}Artists{% if nav.advancing and can.edit_artists %}<span class="count">{{ nav.advancing }}</span>{% endif %}</a>
       <a href="{% url 'timetable' event.slug %}"{% active "timetable" %}>{% icon "calendar" %}Timetable</a>
       <a href="{% url 'logistics' event.slug %}"{% active "logistics" %}>{% icon "truck" %}Transport &amp; hotels</a>
+      {% endif %}
+      {% if can.crew %}
       <div class="side-label">Crew</div>
       <a href="{% url 'shifts' event.slug %}"{% active "shifts" %}>{% icon "clock" %}Shifts</a>
       <a href="{% url 'roster' event.slug %}"{% active "roster" %}>{% icon "grid" %}Roster</a>
       <a href="{% url 'volunteers' event.slug %}"{% active "volunteers" %}>{% icon "heart" %}Volunteers</a>
       <a href="{% url 'teams' event.slug %}"{% active "teams" %}>{% icon "flag" %}Teams</a>
-      <div class="side-label">Setup</div>
+      {% endif %}
+      {% if can.setup or can.settings %}<div class="side-label">Setup</div>{% endif %}
+      {% if can.setup %}
       <a href="{% url 'zones' event.slug %}"{% active "zones" %}>{% icon "map" %}Zones</a>
       <a href="{% url 'types' event.slug %}"{% active "types" %}>{% icon "badge" %}Credentials</a>
       <a href="{% url 'items' event.slug %}"{% active "items" %}>{% icon "box" %}Items</a>
       <a href="{% url 'stages' event.slug %}"{% active "stages" %}>{% icon "stage" %}Stages</a>
+      {% endif %}
+      {% if can.settings %}
+      <a href="{% url 'team' event.slug %}"{% active "team" %}>{% icon "users" %}Team &amp; roles</a>
       <a href="{% url 'event_settings' event.slug %}"{% active "event_settings" %}>{% icon "settings" %}Event settings</a>
+      {% endif %}
     </nav>
     {% else %}
     <nav class="side-nav">
@@ -37,7 +48,7 @@
     {% endif %}
     <div class="side-foot">
       <span class="avatar" style="--c:#2a3142;--t:#fff">{{ user.get_username|slice:":2"|upper }}</span>
-      <div class="who"><b>{{ user.get_full_name|default:user.get_username }}</b><small>{% if user.is_staff %}<a href="{% url 'admin:index' %}" style="color:inherit">Admin</a>{% else %}Organiser{% endif %}</small></div>
+      <div class="who"><b>{{ user.get_full_name|default:user.get_username }}</b><small>{% if access.role_label %}{{ access.role_label }}{% else %}Organiser{% endif %}{% if user.is_staff %} · <a href="{% url 'admin:index' %}" style="color:inherit">Admin</a>{% endif %}</small></div>
       <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button class="btn btn-sm btn-icon" title="Log out">{% icon "logout" %}<span class="sr-only">Log out</span></button></form>
     </div>
   </aside>
@@ -46,7 +57,10 @@
       <button class="btn btn-sm btn-icon" type="button" data-nav-toggle aria-label="Menu">{% icon "menu" %}</button>
       <b>{% if event %}{{ event.name }}{% else %}Backstage{% endif %}</b>
     </div>
-    <main class="content">{% block content %}{% endblock %}</main>
+    <main class="content{% if readonly %} readonly{% endif %}">
+      {% if readonly %}<div class="callout" style="margin-bottom:1.25rem">{% icon "info" %}<div>You can view this page; your role ({{ access.role_label }}) can't make changes here.</div></div>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
   </div>
 </div>
 {% endblock %}

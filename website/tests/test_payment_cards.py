@@ -8,14 +8,16 @@ from django.utils import timezone
 
 from accreditation import services
 from accreditation.models import Accreditation, AccreditationItem, AccreditationType, Item, TypeItem
-from core.models import Event
+from core.models import Event, Membership
 
 
 class PaymentCardTests(TestCase):
     def setUp(self):
-        self.client.force_login(User.objects.create_user("org", password="pw"))
+        user = User.objects.create_user("org", password="pw")
+        self.client.force_login(user)
         today = timezone.localdate()
         self.event = Event.objects.create(name="Fest", start_date=today, end_date=today + timedelta(days=1))
+        Membership.objects.create(user=user, event=self.event, role="manager")
         self.card = Item.objects.create(
             event=self.event, name="Payment card", kind=Item.PAYMENT_CARD, default_amount=Decimal("10")
         )

@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from accreditation.services import absolute
 from core.helpers import crud_page, get_event, render_event
 from core.models import log
+from core.permissions import event_view
 
 from .forms import (
     AdvancingForm,
@@ -18,6 +19,7 @@ from .forms import (
 from .models import Artist, HotelRoom, Performance, Transport
 
 
+@event_view('setup')
 def stages(request, slug):
     event = get_event(slug)
     return crud_page(
@@ -30,6 +32,7 @@ def stages(request, slug):
     )
 
 
+@event_view('artists')
 def artist_list(request, slug):
     event = get_event(slug)
     form = ArtistCreateForm(request.POST or None, event=event, prefix="f-new")
@@ -70,6 +73,7 @@ SUBFORMS = {
 }
 
 
+@event_view('artists')
 def artist_detail(request, slug, pk):
     event = get_event(slug)
     artist = get_object_or_404(event.artists.select_related("company"), pk=pk)
@@ -144,6 +148,7 @@ def artist_detail(request, slug, pk):
     )
 
 
+@event_view('artists')
 def timetable(request, slug):
     event = get_event(slug)
     days = list(event.days.all())
@@ -190,6 +195,7 @@ def timetable(request, slug):
     )
 
 
+@event_view('artists')
 def logistics(request, slug):
     event = get_event(slug)
     if request.method == "POST":

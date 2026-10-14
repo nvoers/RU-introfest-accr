@@ -7,6 +7,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
 
+from .permissions import ROLES
+
 
 def new_token():
     return secrets.token_urlsafe(18)
@@ -142,3 +144,39 @@ def log(event, text, user=None, label="", url=""):
     Activity.objects.create(
         event=event, actor=user, actor_label=label, text=text[:300], url=url
     )
+
+
+class Membership(models.Model):
+    """An organiser's role in one event."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="memberships"
+    )
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="memberships")
+    role = models.CharField(
+        max_length=20, choices=[(key, label) for key, (label, _) in ROLES.items()]
+    )
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["user__first_name", "user__username"]
+        constraints = [
+            models.UniqueConstraint(fields=["user", "event"], name="unique_membership")
+        ]
+
+    def __str__(self):
+        return f"{self.user} – {self.event} ({self.role_label})"
+
+    @property
+    def role_label(self):
+        from .permissions import ROLES
+
+        return ROLES.get(self.role, (self.role,))[0]
+

@@ -39,12 +39,27 @@ def nav_counts(event):
     }
 
 
+def visible_events(user):
+    events = Event.objects.all()
+    if not user.is_superuser:
+        events = events.filter(memberships__user=user)
+    return events
+
+
 def render_event(request, event, template, context=None, section=""):
+    from .permissions import Access
+
+    access = getattr(request, "access", None) or Access(request.user, event)
+    area = getattr(request, "area", None)
     context = dict(context or {})
     context.setdefault("event", event)
     context.setdefault("nav", nav_counts(event))
     context.setdefault("section", section)
-    context.setdefault("events", Event.objects.all()[:20])
+    context["access"] = access
+    context["can"] = access.flags()
+    # Pages the user may only look at hide their forms and edit buttons (see app.css);
+    # the server refuses the changes either way.
+    context["readonly"] = area is not None and not access.can(area, edit=True)
     return render(request, template, context)
 
 

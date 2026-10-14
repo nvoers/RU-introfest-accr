@@ -94,7 +94,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Outgoing mail (e-tickets, approvals). Printed to the console unless configured.
 EMAIL_BACKEND = os.environ.get(
-    "DJANGO_EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+    "DJANGO_EMAIL_BACKEND", "core.mail.EmailBackend"
 )
 EMAIL_HOST = os.environ.get("DJANGO_EMAIL_HOST", "localhost")
 EMAIL_PORT = int(os.environ.get("DJANGO_EMAIL_PORT", "25"))
@@ -106,3 +106,5 @@ DEFAULT_FROM_EMAIL = os.environ.get("DJANGO_DEFAULT_FROM_EMAIL", "accreditation@
 # Absolute base URL used in e-mails, e.g. https://accr.example.nl
 SITE_URL = os.environ.get("DJANGO_SITE_URL", "http://127.0.0.1:8000").rstrip("/")
 CURRENCY_SYMBOL = os.environ.get("DJANGO_CURRENCY_SYMBOL", "€")
+
+AUTHENTICATION_BACKENDS = ["core.backends.EmailOrUsernameBackend"]

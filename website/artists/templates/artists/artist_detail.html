@@ -43,7 +43,7 @@
       </div>
     </section>
     <section class="card">
-      <div class="card-head"><h2>Party</h2><a class="btn btn-sm" href="{% url 'person_create' event.slug %}?company={{ artist.company.pk }}">{% icon "plus" %}Add</a></div>
+      <div class="card-head"><h2>Party</h2><a class="btn btn-sm edit-only" href="{% url 'person_create' event.slug %}?company={{ artist.company.pk }}">{% icon "plus" %}Add</a></div>
       <div class="card-body" style="padding-bottom:.5rem">{% include "accreditation/_usage.html" %}
         {% if not usage %}<p class="small"><a class="link" href="{{ artist.company.get_absolute_url }}">Set a contingent</a> so they can register their own crew.</p>{% endif %}</div>
       {% if party %}

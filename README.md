@@ -32,6 +32,23 @@ portal link to fill in advancing, request transport/hotel and register the party
 sign-up form (`/v/<token>/`). Approved volunteers get their credential and claim open shifts
 from their e-ticket page (capacity, overlap and max-shift rules enforced).
 
+## Users & roles
+
+Organisers get access per event through a role (Event → **Team & roles**):
+
+| Role | Access |
+| --- | --- |
+| Manager | Everything for the event, including setup, settings and the team |
+| Accreditation | People, approvals, companies and check-in; artists and crew read-only |
+| Artist liaison | Artists, timetable, transport & hotels; people read-only |
+| Crew coordinator | Shifts, roster, volunteers, teams; people read-only |
+| Check-in staff | Only the scanner (they land on it after signing in) |
+| Viewer | Read-only access to everything |
+
+Superusers can do everything; only superusers and staff can create events (the creator becomes
+manager). Managers invite people by e-mail – new users get a link to choose their own password.
+Sign in with e-mail or username; "Forgot your password?" sends a reset link.
+
 ## Getting started
 
 ```bash

@@ -10,7 +10,7 @@
   <div class="row">
     {% if company.artist %}<a class="btn" href="{{ company.artist.get_absolute_url }}">{% icon "mic" %}Artist page</a>{% endif %}
     <button class="btn" data-open="dlg-edit">{% icon "edit" %}Edit</button>
-    <a class="btn btn-primary" href="{% url 'person_create' event.slug %}?company={{ company.pk }}">{% icon "user-plus" %}Add person</a>
+    <a class="btn btn-primary edit-only" href="{% url 'person_create' event.slug %}?company={{ company.pk }}">{% icon "user-plus" %}Add person</a>
   </div>
 </div>
 
