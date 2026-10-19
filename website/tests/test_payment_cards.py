@@ -78,11 +78,22 @@ class PaymentCardTests(TestCase):
         a, b = self.person(self.crew), self.person(self.crew)
         TypeItem.objects.create(type=self.crew, item=self.card)
         b.apply_default_items()
-        self.client.post(self.url("people"), {"ids": [a.pk, b.pk], "bulk": "card",
-                                              "card_item": self.card.pk, "card_amount": "17.5"})
+        self.client.post(self.url("people"), {"ids": [a.pk, b.pk], "bulk": "item",
+                                              "bulk_item": self.card.pk, "bulk_value": "17.5"})
         amounts = set(AccreditationItem.objects.filter(item=self.card).values_list("amount", flat=True))
         self.assertEqual(amounts, {Decimal("17.50")})
         self.assertEqual(AccreditationItem.objects.filter(item=self.card).count(), 2)
+
+    def test_bulk_give_item(self):
+        a, b = self.person(self.crew), self.person(self.crew)
+        band = Item.objects.create(event=self.event, name="Wristband", kind=Item.WRISTBAND)
+        AccreditationItem.objects.create(accreditation=b, item=band, quantity=5)
+        self.client.post(self.url("people"), {"ids": [a.pk, b.pk], "bulk": "item",
+                                              "bulk_item": band.pk, "bulk_value": "2"})
+        self.assertEqual(list(band.handouts.values_list("quantity", flat=True)), [2, 2])
+        # A card without an amount gets the item default.
+        self.client.post(self.url("people"), {"ids": [a.pk], "bulk": "item", "bulk_item": self.card.pk})
+        self.assertEqual(a.items.get(item=self.card).amount, Decimal("10"))
 
     def test_amount_shown_on_ticket_scanner_and_export(self):
         TypeItem.objects.create(type=self.artist, item=self.card, amount=Decimal("25"))

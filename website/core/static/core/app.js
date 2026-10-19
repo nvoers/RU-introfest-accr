@@ -90,4 +90,12 @@
     boxes.forEach((b) => b.addEventListener("change", sync));
     sync();
   });
+
+  // Bulk "give item": the value box asks for a quantity or a card amount.
+  $$("[data-item-select]").forEach((select) => {
+    const input = select.parentElement.querySelector("input");
+    const sync = () => (input.placeholder = select.selectedOptions[0]?.dataset.placeholder || "");
+    select.addEventListener("change", sync);
+    sync();
+  });
 })();

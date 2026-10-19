@@ -126,6 +126,7 @@ def people(request, slug):
             "counts": counts,
             "statuses": Accreditation.STATUSES,
             "card_items": event.items.filter(kind=Item.PAYMENT_CARD),
+            "bulk_items": event.items.all(),
         },
         section="people",
     )
@@ -138,8 +139,8 @@ def bulk_action(request, event):
         ids, action = [request.POST["single"]], "approve"
     selected = event.accreditations.filter(pk__in=ids).select_related("type", "event")
     done = 0
-    if action == "card":
-        return bulk_card(request, event, selected)
+    if action == "item":
+        return bulk_item(request, event, selected)
     for acc in selected:
         if action == "approve" and acc.status != Accreditation.APPROVED:
             services.approve(acc, request.user)
@@ -163,22 +164,35 @@ def bulk_action(request, event):
     return safe_next(request, request.get_full_path())
 
 
-def bulk_card(request, event, selected):
-    """Give the selected people a payment card with the same amount (or update it)."""
-    item = event.items.filter(kind=Item.PAYMENT_CARD, pk=request.POST.get("card_item")).first()
-    amount = parse_amount(request.POST.get("card_amount", ""))
-    if item is None or amount is None:
-        messages.error(request, "Choose a payment card and enter a valid amount.")
+def bulk_item(request, event, selected):
+    """Give the selected people the same item (or update it): a quantity, or a card amount."""
+    item = event.items.filter(pk=request.POST.get("bulk_item")).first()
+    value = request.POST.get("bulk_value", "").strip()
+    if item is None:
+        messages.error(request, "Choose an item.")
         return safe_next(request, request.get_full_path())
+    if item.is_payment_card:
+        amount = parse_amount(value) if value else (item.default_amount or Decimal("0"))
+        if amount is None:
+            messages.error(request, "Enter a valid amount, e.g. 12.50.")
+            return safe_next(request, request.get_full_path())
+        defaults, what = {"amount": amount}, f"{item.name} of {money(amount)}"
+    else:
+        try:
+            qty = int(value or 1)
+        except ValueError:
+            qty = 0
+        if qty < 1:
+            messages.error(request, "Enter a quantity of 1 or more.")
+            return safe_next(request, request.get_full_path())
+        defaults, what = {"quantity": qty}, f"{qty}× {item.name}"
     n = 0
     for acc in selected:
-        AccreditationItem.objects.update_or_create(
-            accreditation=acc, item=item, defaults={"amount": amount}
-        )
+        AccreditationItem.objects.update_or_create(accreditation=acc, item=item, defaults=defaults)
         n += 1
     if n:
-        log(event, f"Set {item.name} to {money(amount)} for {n} people", request.user)
-    messages.success(request, f"{item.name} of {money(amount)} set for {n} {'person' if n == 1 else 'people'}.")
+        log(event, f"Gave {what} to {n} people", request.user)
+    messages.success(request, f"{what} given to {n} {'person' if n == 1 else 'people'}.")
     return safe_next(request, request.get_full_path())
 
 
