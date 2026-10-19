@@ -37,8 +37,9 @@
     <section class="card">
       <div class="card-head"><h2>Advancing portal</h2></div>
       <div class="card-body">
-        <p class="small muted" style="margin-bottom:.75rem">The tour manager fills in advancing, requests transport and hotel, and registers the party here.</p>
+        <p class="small muted" style="margin-bottom:.75rem">The tour manager registers the party here{% if artist.portal_advancing %}, fills in advancing{% endif %}{% if artist.portal_logistics %}, requests transport and hotel{% endif %}.</p>
         {% include "components/copy.html" with id="portal" value=portal_link %}
+        <p class="small" style="margin-top:.6rem">Tabs: Party{% if artist.portal_advancing %} · Advancing{% endif %}{% if artist.portal_logistics %} · Transport &amp; hotel{% endif %} <button class="btn btn-sm btn-ghost" data-open="dlg-admin">Change</button></p>
         <a class="link small" style="display:inline-block;margin-top:.6rem" href="{{ artist.company.get_absolute_url }}">Manage contact &amp; send link →</a>
       </div>
     </section>

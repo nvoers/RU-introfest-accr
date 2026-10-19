@@ -58,7 +58,14 @@ class AdvancingForm(forms.ModelForm):
 class ArtistAdminForm(forms.ModelForm):
     class Meta:
         model = Artist
-        fields = ["name", "agent", "advancing_status", "internal_notes"]
+        fields = [
+            "name",
+            "agent",
+            "advancing_status",
+            "portal_advancing",
+            "portal_logistics",
+            "internal_notes",
+        ]
         widgets = {"internal_notes": forms.Textarea(attrs={"rows": 3})}
 
 

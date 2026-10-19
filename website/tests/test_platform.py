@@ -288,6 +288,24 @@ class ArtistTests(Base):
                                "transport-pickup": "Station", "transport-dropoff": "Gate", "transport-passengers": 4})
         self.assertEqual(self.artist.transports.get().status, "requested")
 
+    def test_portal_tabs_toggle_per_artist(self):
+        self.client.post(reverse("artist_detail", args=[self.event.slug, self.artist.pk]), {
+            "action": "admin", "admin-name": "Goldband", "admin-advancing_status": Artist.NOT_STARTED,
+            "admin-portal_advancing": "on",
+        })
+        self.artist.refresh_from_db()
+        self.assertEqual((self.artist.portal_advancing, self.artist.portal_logistics), (True, False))
+        self.client.logout()
+        url = reverse("portal_home", args=[self.artist.company.token])
+        response = self.client.get(url + "?tab=logistics")
+        self.assertContains(response, "?tab=advancing")
+        self.assertNotContains(response, "?tab=logistics")
+        self.assertNotContains(response, "Request transport")
+        self.client.post(url + "?tab=logistics", {
+            "action": "transport", "transport-day": self.day1.pk, "transport-time": "14:00",
+            "transport-pickup": "Station", "transport-dropoff": "Gate", "transport-passengers": 4})
+        self.assertFalse(self.artist.transports.exists())
+
     def test_timetable_handles_past_midnight(self):
         Performance.objects.create(artist=self.artist, stage=self.stage, day=self.day1, start=time(23), end=time(1))
         response = self.client.get(reverse("timetable", args=[self.event.slug]))

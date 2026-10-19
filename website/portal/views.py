@@ -28,8 +28,13 @@ def get_company(token):
 def portal_home(request, token):
     company = get_company(token)
     artist = getattr(company, "artist", None)
+    tabs = {"people"}
+    if artist and artist.portal_advancing:
+        tabs.add("advancing")
+    if artist and artist.portal_logistics:
+        tabs.add("logistics")
     tab = request.GET.get("tab", "people")
-    if tab not in ("people", "advancing", "logistics") or (tab != "people" and not artist):
+    if tab not in tabs:
         tab = "people"
     label = company.contact_name or company.name
     here = f"{reverse('portal_home', args=[token])}?tab={tab}"
@@ -83,7 +88,7 @@ def portal_home(request, token):
                 if n else "There were no drafts to submit.",
             )
             return redirect(here)
-        elif artist and action == "advancing":
+        elif "advancing" in tabs and action == "advancing":
             form = AdvancingForm(request.POST, request.FILES, instance=artist, prefix="adv")
             if form.is_valid():
                 artist = form.save(commit=False)
@@ -98,7 +103,7 @@ def portal_home(request, token):
                                  else "Saved. You can come back later to finish.")
                 return redirect(here)
             forms["advancing"] = form
-        elif artist and action in ("transport", "room"):
+        elif "logistics" in tabs and action in ("transport", "room"):
             cls = TransportForm if action == "transport" else HotelRoomForm
             form = cls(request.POST, artist=artist, prefix=action)
             if form.is_valid():
@@ -111,7 +116,7 @@ def portal_home(request, token):
                 messages.success(request, "Request sent.")
                 return redirect(here)
             forms[action], open_dialog = form, f"dlg-{action}"
-        elif artist and action in ("transport_delete", "room_delete"):
+        elif "logistics" in tabs and action in ("transport_delete", "room_delete"):
             related = artist.transports if action == "transport_delete" else artist.rooms
             related.filter(pk=request.POST.get("item"), status="requested").delete()
             return redirect(here)
@@ -126,6 +131,7 @@ def portal_home(request, token):
             "event": company.event,
             "artist": artist,
             "tab": tab,
+            "tabs": tabs,
             "forms": forms,
             "people": people,
             "usage": usage,

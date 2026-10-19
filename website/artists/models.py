@@ -56,6 +56,14 @@ class Artist(models.Model):
     )
     internal_notes = models.TextField(blank=True)
 
+    # Which tabs the tour manager sees in the advancing portal (party is always shown).
+    portal_advancing = models.BooleanField(
+        "advancing tab", default=True, help_text="Let them fill in the advancing sheet."
+    )
+    portal_logistics = models.BooleanField(
+        "transport & hotel tab", default=True, help_text="Let them request transport and hotel rooms."
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

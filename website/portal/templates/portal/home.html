@@ -8,11 +8,11 @@
   </div>
 </div>
 
-{% if artist %}
+{% if tabs|length > 1 %}
 <nav class="tabs">
   <a href="?tab=people"{% if tab == "people" %} aria-current="page"{% endif %}>{% icon "users" %}Party &amp; guests</a>
-  <a href="?tab=advancing"{% if tab == "advancing" %} aria-current="page"{% endif %}>{% icon "file" %}Advancing</a>
-  <a href="?tab=logistics"{% if tab == "logistics" %} aria-current="page"{% endif %}>{% icon "truck" %}Transport &amp; hotel</a>
+  {% if "advancing" in tabs %}<a href="?tab=advancing"{% if tab == "advancing" %} aria-current="page"{% endif %}>{% icon "file" %}Advancing</a>{% endif %}
+  {% if "logistics" in tabs %}<a href="?tab=logistics"{% if tab == "logistics" %} aria-current="page"{% endif %}>{% icon "truck" %}Transport &amp; hotel</a>{% endif %}
 </nav>
 {% endif %}
 
