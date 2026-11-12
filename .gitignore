@@ -219,3 +219,6 @@ __marimo__/
 
 # Django collectstatic output
 website/staticfiles/
+
+# Uploaded files (rider PDFs etc.)
+website/media/

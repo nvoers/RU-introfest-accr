@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="public"><main class="public-main">
+  <div class="card card-body" style="max-width:420px;margin:8vh auto 0">
+    <div class="brand" style="padding:0 0 1.25rem;color:var(--text)"><span class="brand-mark">B</span>Backstage</div>
+    {% block card %}{% endblock %}
+  </div>
+</main></div>
+{% endblock %}

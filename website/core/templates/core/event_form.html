@@ -1,0 +1,10 @@
+{% extends "app.html" %}
+{% block title %}New event{% endblock %}
+{% block content %}
+<div class="page-head"><div class="titles"><div class="crumbs"><a href="{% url 'event_list' %}">Events</a><span>/</span></div><h1>New event</h1><p>Days are created automatically from the date range.</p></div></div>
+<form method="post" class="card card-body" style="max-width:720px">
+  {% csrf_token %}
+  {% include "components/form.html" %}
+  <div class="form-actions"><a class="btn" href="{% url 'event_list' %}">Cancel</a><button class="btn btn-primary">Create event</button></div>
+</form>
+{% endblock %}

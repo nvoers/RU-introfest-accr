@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="public">
+  <header class="public-head"><div class="inner">
+    <span class="brand-mark">{{ event.name|slice:":1"|upper }}</span>
+    <div class="grow"><small>{% block kicker %}{{ event.start_date|date:"j M" }}{% if event.end_date != event.start_date %} – {{ event.end_date|date:"j M Y" }}{% endif %}{% if event.venue %} · {{ event.venue }}{% endif %}{% endblock %}</small><b>{{ event.name }}</b></div>
+  </div></header>
+  <main class="public-main">{% block content %}{% endblock %}</main>
+</div>
+{% endblock %}

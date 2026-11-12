@@ -1,0 +1,47 @@
+{% extends "app.html" %}
+{% block title %}Volunteers{% endblock %}
+{% block content %}
+<div class="page-head"><div class="titles"><h1>Volunteers</h1><p>Open a public sign-up form. Approved volunteers get their credential and can pick shifts themselves.</p></div></div>
+
+<div class="split">
+  <div>
+    <section class="card">
+      <div class="card-head"><h2>Sign-ups</h2><span class="muted small">{{ people|length }}</span></div>
+      {% if people %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Name</th><th>Status</th><th class="hide-sm">Prefers</th><th class="hide-sm">Available</th><th class="num">Shifts</th><th class="num">Hours</th></tr></thead>
+        <tbody>{% for p in people %}
+          <tr>
+            <td><div class="who"><span class="avatar">{{ p.initials }}</span><div><a href="{{ p.get_absolute_url }}">{{ p.full_name }}</a><span class="sub">{{ p.email }}{% if p.volunteer.shirt_size %} · {{ p.volunteer.shirt_size }}{% endif %}</span></div></div></td>
+            <td>{% status p %}</td>
+            <td class="hide-sm"><div class="tags">{% for t in p.volunteer.preferred_teams.all %}{% pill t %}{% empty %}<span class="faint small">Anything</span>{% endfor %}</div></td>
+            <td class="hide-sm small">{% for d in p.volunteer.available_days.all %}{{ d.date|date:"D" }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            <td class="num">{{ p.n_shifts }}</td>
+            <td class="num">{{ hours|get:p.pk|default:0 }}</td>
+          </tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="empty">{% icon "heart" %}<h3>No sign-ups yet</h3><p>Open the form on the right and share the link.</p></div>{% endif %}
+    </section>
+  </div>
+  <aside>
+    <section class="card">
+      <div class="card-head"><h2>Sign-up form</h2>{% if settings.signup_open %}<span class="badge tone-success">Open</span>{% else %}<span class="badge">Closed</span>{% endif %}</div>
+      <div class="card-body">
+        {% include "components/copy.html" with id="signup" value=signup_link %}
+        <p class="small muted" style="margin-top:.6rem">New sign-ups appear under <a class="link" href="{% url 'approvals' event.slug %}">Approvals</a>.</p>
+      </div>
+      <form method="post" class="card-foot">
+        {% csrf_token %}
+        {% include "components/form.html" with one=True %}
+        <div class="form-actions" style="margin-top:.9rem"><button class="btn btn-primary btn-sm">Save</button></div>
+      </form>
+    </section>
+    <section class="card stat">
+      <div class="label">Shift capacity</div>
+      <div class="value">{{ capacity }}</div>
+      <div class="sub">slots across all shifts</div>
+    </section>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "app.html" %}
+{% block title %}Team & roles{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Team &amp; roles</h1><p>Who can work on {{ event.name }}, and what they're allowed to do.</p></div>
+  <button class="btn btn-primary" data-open="dlg-new">{% icon "user-plus" %}Invite member</button>
+</div>
+
+<div class="split">
+  <section class="card">
+    <div class="card-head"><h2>Members</h2><span class="muted small">{{ members|length }}</span></div>
+    {% if members %}
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Name</th><th>Role</th><th class="hide-sm">Last login</th><th class="actions"></th></tr></thead>
+      <tbody>{% for m in members %}
+        <tr>
+          <td><div class="who"><span class="avatar">{{ m.user.first_name|default:m.user.email|default:m.user.username|slice:":1"|upper }}{{ m.user.last_name|slice:":1"|upper }}</span><div><b>{{ m.user.get_full_name|default:m.user.username }}</b>{% if m.user == user %} <span class="badge">You</span>{% endif %}<span class="sub">{{ m.user.email }}</span></div></div></td>
+          <td>
+            <form method="post" class="row nowrap" style="--gap:.4rem">{% csrf_token %}<input type="hidden" name="action" value="role" /><input type="hidden" name="item" value="{{ m.pk }}" />
+              <select class="input" name="role" style="width:auto;height:32px" onchange="this.form.requestSubmit()" aria-label="Role of {{ m.user }}">
+                {% for key, r in roles.items %}<option value="{{ key }}"{% if m.role == key %} selected{% endif %}>{{ r.0 }}</option>{% endfor %}
+              </select>
+            </form>
+          </td>
+          <td class="hide-sm small">{% if m.user.last_login %}{{ m.user.last_login|timesince }} ago{% elif not m.user.has_usable_password %}<span class="badge tone-warning">Invite pending</span>{% else %}<span class="faint">Never</span>{% endif %}</td>
+          <td class="actions">
+            <form method="post" class="inline">{% csrf_token %}<input type="hidden" name="item" value="{{ m.pk }}" />
+              {% if not m.user.last_login %}<button class="btn btn-sm btn-ghost" name="action" value="resend" title="Send the invite again">{% icon "send" %}Resend</button>{% endif %}
+              <button class="btn btn-sm btn-ghost btn-icon btn-danger" name="action" value="remove" title="Remove" data-confirm="Remove {{ m.user.get_full_name|default:m.user.username }} from this event?">{% icon "trash" %}</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}</tbody>
+    </table></div>
+    {% else %}
+    <div class="empty">{% icon "users" %}<h3>No members yet</h3><p>Invite colleagues and give each a role.</p></div>
+    {% endif %}
+    {% if admins %}<div class="card-foot">Administrators always have full access: {% for a in admins %}{{ a.get_full_name|default:a.username }}{% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
+  </section>
+
+  <aside>
+    <section class="card">
+      <div class="card-head"><h2>Roles</h2></div>
+      <ul class="list">{% for key, r in roles.items %}<li style="display:block"><b>{{ r.0 }}</b><div class="small muted">{{ r.1 }}</div></li>{% endfor %}</ul>
+    </section>
+  </aside>
+</div>
+{% include "components/dialog.html" with id="dlg-new" title="Invite member" form=new_form action="invite" submit="Send invite" %}
+{% endblock %}

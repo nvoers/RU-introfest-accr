@@ -1,0 +1,37 @@
+{% extends "app.html" %}
+{% block title %}Transport & hotels{% endblock %}
+{% block content %}
+<div class="page-head"><div class="titles"><h1>Transport &amp; hotels</h1><p>All artist requests in one place. Confirm, decline, and assign a hotel.</p></div>
+<button class="btn no-print" onclick="window.print()">{% icon "printer" %}Print</button></div>
+
+<section class="card">
+  <div class="card-head"><h2>Transport</h2><span class="muted small">{{ transports|length }}</span></div>
+  {% if transports %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>When</th><th>Artist</th><th>Route</th><th class="num">Pax</th><th>Status</th><th class="actions no-print"></th></tr></thead>
+    <tbody>{% for t in transports %}
+      <tr><td class="nowrap"><b>{{ t.day.short }}</b> {{ t.time|time:"H:i" }}</td><td><a class="link" href="{{ t.artist.get_absolute_url }}">{{ t.artist }}</a></td><td>{{ t.pickup }} → {{ t.dropoff }}{% if t.notes %}<span class="sub">{{ t.notes }}</span>{% endif %}</td><td class="num">{{ t.passengers }}</td><td>{% status t %}</td>
+      <td class="actions no-print"><form method="post" class="inline">{% csrf_token %}<input type="hidden" name="kind" value="transport" /><input type="hidden" name="item" value="{{ t.pk }}" />
+        {% if t.status != "confirmed" %}<button class="btn btn-sm" name="status" value="confirmed">{% icon "check" %}Confirm</button>{% endif %}{% if t.status != "declined" %}<button class="btn btn-sm btn-ghost" name="status" value="declined">Decline</button>{% endif %}</form></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="empty-inline">No transport requests.</p>{% endif %}
+</section>
+
+<section class="card mt">
+  <div class="card-head"><h2>Hotel rooms</h2><span class="muted small">{{ rooms|length }}</span></div>
+  {% if rooms %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Dates</th><th>Artist</th><th>Room</th><th>Guests</th><th>Hotel</th><th>Status</th><th class="actions no-print"></th></tr></thead>
+    <tbody>{% for r in rooms %}
+      <tr><td class="nowrap">{{ r.check_in|date:"j M" }} → {{ r.check_out|date:"j M" }}<span class="sub">{{ r.nights }} night{{ r.nights|pluralize }}</span></td><td><a class="link" href="{{ r.artist.get_absolute_url }}">{{ r.artist }}</a></td><td>{{ r.get_room_type_display }}</td><td class="small">{{ r.guests }}</td>
+      <td colspan="3"><form method="post" class="row nowrap">{% csrf_token %}<input type="hidden" name="kind" value="room" /><input type="hidden" name="item" value="{{ r.pk }}" />
+        <input class="input" name="hotel" value="{{ r.hotel }}" placeholder="Hotel name" style="min-width:140px;height:30px" />
+        {% status r %}
+        <button class="btn btn-sm no-print" name="status" value="confirmed">{% icon "check" %}Confirm</button>
+        {% if r.status != "declined" %}<button class="btn btn-sm btn-ghost no-print" name="status" value="declined">Decline</button>{% endif %}</form></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="empty-inline">No hotel requests.</p>{% endif %}
+</section>
+{% endblock %}

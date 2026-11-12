@@ -1,0 +1,22 @@
+{% extends "app.html" %}
+{% block title %}Zones{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Zones</h1><p>Areas with controlled access. Scan points check if a credential includes the zone.</p></div>
+  <button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New zone</button>
+</div>
+<section class="card">
+  {% if rows %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Zone</th><th>Code</th><th class="num">Used by credentials</th><th class="actions"></th></tr></thead>
+    <tbody>{% for row in rows %}{% with obj=row.obj %}
+      <tr><td><div class="row">{% pill obj %}</div></td><td>{% if obj.code %}<span class="mono">{{ obj.code }}</span>{% else %}<span class="faint">—</span>{% endif %}</td>
+      <td class="num">{{ obj.n_types }}</td><td class="actions">{% include "components/row_actions.html" %}</td></tr>
+    {% endwith %}{% endfor %}</tbody>
+  </table></div>
+  {% else %}
+  <div class="empty">{% icon "map" %}<h3>No zones yet</h3><p>For example: Terrain, Backstage, Stage, Production office, VIP.</p><button class="btn btn-primary" data-open="dlg-new">{% icon "plus" %}New zone</button></div>
+  {% endif %}
+</section>
+{% include "components/crud_dialogs.html" %}
+{% endblock %}

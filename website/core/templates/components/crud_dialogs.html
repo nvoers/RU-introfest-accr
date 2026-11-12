@@ -1,0 +1,7 @@
+{% comment %}New + edit dialogs for a crud_page. with: noun [body_template wide multipart]{% endcomment %}
+{% include "components/dialog.html" with id="dlg-new" title="New "|add:noun form=new_form submit="Add" %}
+{% for row in rows %}
+  {% with pk=row.obj.pk|stringformat:"s" %}
+  {% include "components/dialog.html" with id="dlg-"|add:pk title="Edit "|add:noun form=row.form item=pk %}
+  {% endwith %}
+{% endfor %}

@@ -1,0 +1,33 @@
+{% extends "app.html" %}
+{% block title %}Roster{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="titles"><h1>Roster{% if day %} · {{ day.title }}{% endif %}</h1><p>Who works where, per team.</p></div>
+  <button class="btn no-print" onclick="window.print()">{% icon "printer" %}Print</button>
+</div>
+{% if days %}<nav class="tabs no-print">{% for d in days %}<a href="?day={{ d.pk }}"{% if d == day %} aria-current="page"{% endif %}>{{ d.title }}</a>{% endfor %}</nav>{% endif %}
+{% if by_team %}
+<div class="grid cols-2">
+  {% for team, shifts in by_team %}
+  <section class="card">
+    <div class="card-head">{% dot team %}<h2>{{ team.name }}</h2>{% if team.lead %}<span class="small muted">Lead: {{ team.lead }}</span>{% endif %}</div>
+    <ul class="list">
+      {% for s in shifts %}{% with n=s.assignments.all|length %}
+      <li style="align-items:flex-start">
+        <span class="mono nowrap" style="width:96px;padding-top:2px">{{ s.start|time:"H:i" }}–{{ s.end|time:"H:i" }}</span>
+        <div class="grow">
+          <div class="tags">{% for a in s.assignments.all %}<a class="badge" style="text-decoration:none" href="{{ a.person.get_absolute_url }}">{{ a.person.full_name }}</a>{% endfor %}
+          {% if n < s.capacity %}<span class="badge tone-warning">Open spots</span>{% endif %}</div>
+          {% if s.location %}<div class="small muted" style="margin-top:.2rem">{% icon "pin" %} {{ s.location }}</div>{% endif %}
+        </div>
+        <span class="small{% if n >= s.capacity %} muted{% endif %}"{% if n < s.capacity %} style="color:var(--warning)"{% endif %}>{{ n }}/{{ s.capacity }}</span>
+      </li>
+      {% endwith %}{% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+</div>
+{% else %}
+<section class="card empty">{% icon "grid" %}<h3>No shifts on this day</h3><a class="btn btn-primary" href="{% url 'shifts' event.slug %}">Plan shifts</a></section>
+{% endif %}
+{% endblock %}

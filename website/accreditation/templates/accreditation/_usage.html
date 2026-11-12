@@ -1,0 +1,8 @@
+{% if usage %}
+<ul class="meters">
+  {% for c, used in usage %}
+  <li><div class="top">{% dot c.type %}<span>{{ c.type.name }}</span><span class="num"><b>{{ used }}</b> / {{ c.quota }}</span></div>
+    <div class="bar{% if used > c.quota %} over{% elif used == c.quota %} full{% endif %}" style="--c:{{ c.type.color }}"><span style="width:{{ used|percent:c.quota }}%"></span></div></li>
+  {% endfor %}
+</ul>
+{% else %}<p class="muted small">No contingent set.</p>{% endif %}

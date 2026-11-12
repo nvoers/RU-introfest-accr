@@ -1,0 +1,18 @@
+{% extends "portal/public.html" %}
+{% block title %}Volunteer{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:0 auto">
+  <h1>Volunteer at {{ event.name }}</h1>
+  <p class="muted" style="margin:.4rem 0 1.25rem">{% if settings.intro %}{{ settings.intro|linebreaksbr }}{% else %}Sign up below. Once approved you'll receive your crew pass and can pick your own shifts.{% endif %}</p>
+  {% if teams %}
+  <div class="grid cols-2" style="margin-bottom:1.25rem">
+    {% for t in teams %}<div class="card card-body small"><div class="row">{% dot t %}<b>{{ t.name }}</b></div>{% if t.description %}<p class="muted" style="margin-top:.3rem">{{ t.description }}</p>{% endif %}</div>{% endfor %}
+  </div>
+  {% endif %}
+  <form method="post" class="card card-body">
+    {% csrf_token %}
+    {% include "components/form.html" %}
+    <div class="form-actions"><button class="btn btn-primary btn-lg">Sign up</button></div>
+  </form>
+</div>
+{% endblock %}

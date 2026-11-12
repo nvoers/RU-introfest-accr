@@ -1,0 +1,11 @@
+<form method="post" class="inline">
+  {% csrf_token %}<input type="hidden" name="item" value="{{ obj.pk }}" />
+  {% if portal %}
+    {% if obj.status == "requested" %}<button class="btn btn-sm btn-ghost btn-icon btn-danger" name="action" value="{{ kind }}_delete" title="Withdraw">{% icon "x" %}</button>{% endif %}
+  {% else %}
+    <input type="hidden" name="action" value="{{ kind }}_status" />
+    {% if obj.status != "confirmed" %}<button class="btn btn-sm" name="status" value="confirmed">{% icon "check" %}Confirm</button>{% endif %}
+    {% if obj.status != "declined" %}<button class="btn btn-sm btn-ghost" name="status" value="declined">Decline</button>{% endif %}
+    <button class="btn btn-sm btn-ghost btn-icon btn-danger" name="action" value="{{ kind }}_delete" title="Delete">{% icon "trash" %}</button>
+  {% endif %}
+</form>

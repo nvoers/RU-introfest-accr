@@ -1,0 +1,17 @@
+{% comment %}Modal form. with: id title form [action item submit one wide multipart action_url body_template]{% endcomment %}
+<dialog id="{{ id }}" class="{% if wide %}wide{% endif %}" aria-labelledby="{{ id }}-t">
+  <div class="dialog-head">
+    <h2 id="{{ id }}-t">{{ title }}</h2>
+    <button type="button" class="btn btn-ghost btn-sm btn-icon" data-close aria-label="Close">{% icon "x" %}</button>
+  </div>
+  <form method="post" action="{{ action_url|default:'' }}" class="dialog-body"{% if multipart %} enctype="multipart/form-data"{% endif %}>
+    {% csrf_token %}
+    {% if action %}<input type="hidden" name="action" value="{{ action }}" />{% endif %}
+    {% if item %}<input type="hidden" name="item" value="{{ item }}" />{% endif %}
+    {% if body_template %}{% include body_template %}{% else %}{% include "components/form.html" %}{% endif %}
+    <div class="form-actions">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="submit" class="btn btn-primary">{{ submit|default:"Save" }}</button>
+    </div>
+  </form>
+</dialog>

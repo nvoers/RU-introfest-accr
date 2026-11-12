@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}No access{% endblock %}
+{% block body %}
+<div class="public"><main class="public-main">
+  <div class="card empty" style="max-width:520px;margin:10vh auto 0">
+    {% icon "alert" %}<h3>No access</h3>
+    <p>{% if exception %}{{ exception }}{% else %}You don't have permission to open this page.{% endif %}</p>
+    <a class="btn" href="{% url 'event_list' %}">Back to my events</a>
+  </div>
+</main></div>
+{% endblock %}

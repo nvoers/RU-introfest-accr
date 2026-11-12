@@ -1,3 +1,1 @@
 Django>=5.1,<7
-# Optional, development only: auto-refreshes the browser on template/CSS changes.
-django-browser-reload
